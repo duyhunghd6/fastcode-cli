@@ -1,0 +1,1218 @@
+	github.com/duyhunghd6/fastcode-cli/cmd/ast-compare		coverage: 0.0% of statements
+=== RUN   TestIndexCmdRunESuccess
+⚡ Indexing /var/folders/b2/89vlkn591w1bk8nwgf535wt00000gn/T/fastcode-index-988525604...
+2026/02/26 20:23:46 [engine] loaded 1 files from fastcode-index-988525604
+2026/02/26 20:23:46 [indexer] indexed 2 elements from fastcode-index-988525604 (1 files)
+
+✅ Indexed fastcode-index-988525604 in 2ms
+   Files:    1
+   Elements: 2
+   Graphs:   map[call:map[edges:0 nodes:0] dependency:map[edges:0 nodes:0] inheritance:map[edges:0 nodes:0]]
+--- PASS: TestIndexCmdRunESuccess (0.00s)
+=== RUN   TestIndexCmdRunEForce
+⚡ Indexing /var/folders/b2/89vlkn591w1bk8nwgf535wt00000gn/T/fastcode-index-force-2136156449...
+2026/02/26 20:23:46 [engine] loaded 1 files from fastcode-index-force-2136156449
+2026/02/26 20:23:46 [indexer] indexed 2 elements from fastcode-index-force-2136156449 (1 files)
+
+✅ Indexed fastcode-index-force-2136156449 in 0s
+   Files:    1
+   Elements: 2
+   Graphs:   map[call:map[edges:0 nodes:0] dependency:map[edges:0 nodes:0] inheritance:map[edges:0 nodes:0]]
+--- PASS: TestIndexCmdRunEForce (0.00s)
+=== RUN   TestIndexCmdRunEJSON
+⚡ Indexing /var/folders/b2/89vlkn591w1bk8nwgf535wt00000gn/T/fastcode-index-json-2783741673...
+2026/02/26 20:23:46 [engine] loaded 1 files from fastcode-index-json-2783741673
+2026/02/26 20:23:46 [indexer] indexed 2 elements from fastcode-index-json-2783741673 (1 files)
+{
+  "repo_name": "fastcode-index-json-2783741673",
+  "total_files": 1,
+  "total_elements": 2,
+  "graph_stats": {
+    "call": {
+      "edges": 0,
+      "nodes": 0
+    },
+    "dependency": {
+      "edges": 0,
+      "nodes": 0
+    },
+    "inheritance": {
+      "edges": 0,
+      "nodes": 0
+    }
+  },
+  "cached": false
+}
+--- PASS: TestIndexCmdRunEJSON (0.00s)
+=== RUN   TestQueryCmdRunENoIndex
+🔍 Querying: what is main?
+
+--- PASS: TestQueryCmdRunENoIndex (0.00s)
+=== RUN   TestQueryCmdRunEWithRepo
+⚡ Loading index for /var/folders/b2/89vlkn591w1bk8nwgf535wt00000gn/T/fastcode-query-repo-3472073567...
+2026/02/26 20:23:46 [engine] loaded 1 files from fastcode-query-repo-3472073567
+2026/02/26 20:23:46 [indexer] indexed 2 elements from fastcode-query-repo-3472073567 (1 files)
+🔍 Querying: what is main?
+
+2026/02/26 20:23:46 [engine] query type=understand complexity=15 keywords=[main]
+Found matching code elements:
+
+[function] main (main.go:L2-2)
+  main()
+
+[file] main.go (main.go:L1-2)
+  
+
+
+
+---
+⏱  0s | 🎯 Confidence: 50% | 🔄 Rounds: 1 | 📦 Elements: 2 | Stop: direct_search
+--- PASS: TestQueryCmdRunEWithRepo (0.00s)
+=== RUN   TestQueryCmdRunEMultipleWords
+🔍 Querying: how does the main function work?
+
+    final_test.go:162: multi-word query error: query failed: no repository indexed — run 'fastcode index <path>' first
+--- PASS: TestQueryCmdRunEMultipleWords (0.00s)
+=== RUN   TestBuildConfigCustomCacheDir
+⚡ Indexing /nonexistent...
+    final_test.go:178: custom cache dir error: indexing failed: load repository: cannot access "/nonexistent": stat /nonexistent: no such file or directory (expected for nonexistent path)
+--- PASS: TestBuildConfigCustomCacheDir (0.00s)
+=== RUN   TestBuildConfigCustomEmbeddingModel
+⚡ Indexing /nonexistent...
+    final_test.go:191: custom embedding model error: indexing failed: load repository: cannot access "/nonexistent": stat /nonexistent: no such file or directory (expected)
+--- PASS: TestBuildConfigCustomEmbeddingModel (0.00s)
+=== RUN   TestServeMCPFlagPortDefault
+--- PASS: TestServeMCPFlagPortDefault (0.00s)
+=== RUN   TestBuildRootCmd
+--- PASS: TestBuildRootCmd (0.00s)
+=== RUN   TestBuildRootCmdSubcommands
+--- PASS: TestBuildRootCmdSubcommands (0.00s)
+=== RUN   TestRootCmdHelp
+--- PASS: TestRootCmdHelp (0.00s)
+=== RUN   TestRootCmdVersion
+--- PASS: TestRootCmdVersion (0.00s)
+=== RUN   TestIndexCmdSuccess
+⚡ Indexing /var/folders/b2/89vlkn591w1bk8nwgf535wt00000gn/T/fastcode-idx-cmd-3872249791...
+2026/02/26 20:23:46 [engine] loaded 1 files from fastcode-idx-cmd-3872249791
+2026/02/26 20:23:46 [indexer] indexed 2 elements from fastcode-idx-cmd-3872249791 (1 files)
+
+✅ Indexed fastcode-idx-cmd-3872249791 in 0s
+   Files:    1
+   Elements: 2
+   Graphs:   map[call:map[edges:0 nodes:0] dependency:map[edges:0 nodes:0] inheritance:map[edges:0 nodes:0]]
+--- PASS: TestIndexCmdSuccess (0.00s)
+=== RUN   TestIndexCmdForce
+⚡ Indexing /var/folders/b2/89vlkn591w1bk8nwgf535wt00000gn/T/fastcode-idx-force-1455753889...
+2026/02/26 20:23:46 [engine] loaded 1 files from fastcode-idx-force-1455753889
+2026/02/26 20:23:46 [indexer] indexed 2 elements from fastcode-idx-force-1455753889 (1 files)
+
+✅ Indexed fastcode-idx-force-1455753889 in 0s
+   Files:    1
+   Elements: 2
+   Graphs:   map[call:map[edges:0 nodes:0] dependency:map[edges:0 nodes:0] inheritance:map[edges:0 nodes:0]]
+--- PASS: TestIndexCmdForce (0.00s)
+=== RUN   TestIndexCmdJSON
+⚡ Indexing /var/folders/b2/89vlkn591w1bk8nwgf535wt00000gn/T/fastcode-idx-json-3695587591...
+2026/02/26 20:23:46 [engine] loaded 1 files from fastcode-idx-json-3695587591
+2026/02/26 20:23:46 [indexer] indexed 2 elements from fastcode-idx-json-3695587591 (1 files)
+{
+  "repo_name": "fastcode-idx-json-3695587591",
+  "total_files": 1,
+  "total_elements": 2,
+  "graph_stats": {
+    "call": {
+      "edges": 0,
+      "nodes": 0
+    },
+    "dependency": {
+      "edges": 0,
+      "nodes": 0
+    },
+    "inheritance": {
+      "edges": 0,
+      "nodes": 0
+    }
+  },
+  "cached": false
+}
+--- PASS: TestIndexCmdJSON (0.00s)
+=== RUN   TestIndexCmdCached
+⚡ Indexing /var/folders/b2/89vlkn591w1bk8nwgf535wt00000gn/T/fastcode-idx-cached-3479211566...
+2026/02/26 20:23:46 [engine] loaded 1 files from fastcode-idx-cached-3479211566
+2026/02/26 20:23:46 [indexer] indexed 2 elements from fastcode-idx-cached-3479211566 (1 files)
+
+✅ Indexed fastcode-idx-cached-3479211566 in 0s
+   Files:    1
+   Elements: 2
+   Graphs:   map[call:map[edges:0 nodes:0] dependency:map[edges:0 nodes:0] inheritance:map[edges:0 nodes:0]]
+⚡ Indexing /var/folders/b2/89vlkn591w1bk8nwgf535wt00000gn/T/fastcode-idx-cached-3479211566...
+2026/02/26 20:23:46 [engine] loaded 1 files from fastcode-idx-cached-3479211566
+2026/02/26 20:23:46 [engine] loaded 2 elements from cache
+
+✅ Indexed fastcode-idx-cached-3479211566 in 0s
+   Files:    1
+   Elements: 2
+   Source:   cache (use --force to reindex)
+   Graphs:   map[call:map[edges:0 nodes:0] dependency:map[edges:0 nodes:0] inheritance:map[edges:0 nodes:0]]
+--- PASS: TestIndexCmdCached (0.00s)
+=== RUN   TestIndexCmdInvalidPath
+⚡ Indexing /nonexistent/path...
+Error: indexing failed: load repository: cannot access "/nonexistent/path": stat /nonexistent/path: no such file or directory
+Usage:
+  fastcode index <repo-path> [flags]
+
+Flags:
+      --force   Force re-indexing (ignore cache)
+  -h, --help    help for index
+      --json    Output as JSON
+
+Global Flags:
+      --cache-dir string         Cache directory (default: ~/.fastcode/cache)
+      --embedding-model string   Embedding model name (default "text-embedding-3-small")
+      --no-embeddings            Skip embedding generation (BM25 only)
+
+--- PASS: TestIndexCmdInvalidPath (0.00s)
+=== RUN   TestIndexCmdMissingArg
+--- PASS: TestIndexCmdMissingArg (0.00s)
+=== RUN   TestQueryCmdWithRepo
+⚡ Loading index for /var/folders/b2/89vlkn591w1bk8nwgf535wt00000gn/T/fastcode-qry-cmd-4132555176...
+2026/02/26 20:23:46 [engine] loaded 1 files from fastcode-qry-cmd-4132555176
+2026/02/26 20:23:46 [indexer] indexed 2 elements from fastcode-qry-cmd-4132555176 (1 files)
+🔍 Querying: what is main?
+
+2026/02/26 20:23:46 [engine] query type=understand complexity=15 keywords=[main]
+Found matching code elements:
+
+[function] main (main.go:L2-2)
+  main()
+
+[file] main.go (main.go:L1-2)
+  
+
+
+
+---
+⏱  0s | 🎯 Confidence: 50% | 🔄 Rounds: 1 | 📦 Elements: 2 | Stop: direct_search
+--- PASS: TestQueryCmdWithRepo (0.00s)
+=== RUN   TestQueryCmdMultiWordQuestion
+⚡ Loading index for /var/folders/b2/89vlkn591w1bk8nwgf535wt00000gn/T/fastcode-qry-multi-3184055641...
+2026/02/26 20:23:46 [engine] loaded 1 files from fastcode-qry-multi-3184055641
+2026/02/26 20:23:46 [indexer] indexed 2 elements from fastcode-qry-multi-3184055641 (1 files)
+🔍 Querying: how does the main function work?
+
+2026/02/26 20:23:46 [engine] query type=howto complexity=15 keywords=[main function work]
+Found matching code elements:
+
+[function] main (main.go:L2-2)
+  main()
+
+[file] main.go (main.go:L1-2)
+  
+
+
+
+---
+⏱  0s | 🎯 Confidence: 50% | 🔄 Rounds: 1 | 📦 Elements: 2 | Stop: direct_search
+--- PASS: TestQueryCmdMultiWordQuestion (0.00s)
+=== RUN   TestQueryCmdNoIndex
+🔍 Querying: test question
+
+Error: query failed: no repository indexed — run 'fastcode index <path>' first
+Usage:
+  fastcode query <question> [flags]
+
+Flags:
+  -h, --help          help for query
+      --json          Output as JSON
+      --repo string   Repository path to index/load
+
+Global Flags:
+      --cache-dir string         Cache directory (default: ~/.fastcode/cache)
+      --embedding-model string   Embedding model name (default "text-embedding-3-small")
+      --no-embeddings            Skip embedding generation (BM25 only)
+
+--- PASS: TestQueryCmdNoIndex (0.00s)
+=== RUN   TestQueryCmdInvalidRepo
+⚡ Loading index for /nonexistent...
+Error: index load failed: load repository: cannot access "/nonexistent": stat /nonexistent: no such file or directory
+Usage:
+  fastcode query <question> [flags]
+
+Flags:
+  -h, --help          help for query
+      --json          Output as JSON
+      --repo string   Repository path to index/load
+
+Global Flags:
+      --cache-dir string         Cache directory (default: ~/.fastcode/cache)
+      --embedding-model string   Embedding model name (default "text-embedding-3-small")
+      --no-embeddings            Skip embedding generation (BM25 only)
+
+--- PASS: TestQueryCmdInvalidRepo (0.00s)
+=== RUN   TestQueryCmdMissingArgs
+--- PASS: TestQueryCmdMissingArgs (0.00s)
+=== RUN   TestQueryCmdJSONOutput
+⚡ Loading index for /var/folders/b2/89vlkn591w1bk8nwgf535wt00000gn/T/fastcode-qry-json-505547848...
+2026/02/26 20:23:46 [engine] loaded 1 files from fastcode-qry-json-505547848
+2026/02/26 20:23:46 [indexer] indexed 2 elements from fastcode-qry-json-505547848 (1 files)
+🔍 Querying: what is main?
+
+2026/02/26 20:23:46 [engine] query type=understand complexity=15 keywords=[main]
+{
+  "answer": "Found matching code elements:\n\n[function] main (main.go:L2-2)\n  main()\n\n[file] main.go (main.go:L1-2)\n  \n\n",
+  "confidence": 50,
+  "rounds": 1,
+  "stop_reason": "direct_search",
+  "elements_used": 2
+}
+--- PASS: TestQueryCmdJSONOutput (0.00s)
+=== RUN   TestPersistentFlagsCacheDir
+--- PASS: TestPersistentFlagsCacheDir (0.00s)
+=== RUN   TestPersistentFlagsEmbeddingModel
+--- PASS: TestPersistentFlagsEmbeddingModel (0.00s)
+=== RUN   TestPersistentFlagsNoEmbeddings
+--- PASS: TestPersistentFlagsNoEmbeddings (0.00s)
+=== RUN   TestIndexFlagForce
+--- PASS: TestIndexFlagForce (0.00s)
+=== RUN   TestIndexFlagJSON
+--- PASS: TestIndexFlagJSON (0.00s)
+=== RUN   TestQueryFlagRepo
+--- PASS: TestQueryFlagRepo (0.00s)
+=== RUN   TestServeMCPFlagPort
+--- PASS: TestServeMCPFlagPort (0.00s)
+=== RUN   TestIndexWithCustomEmbeddingModel
+⚡ Indexing /var/folders/b2/89vlkn591w1bk8nwgf535wt00000gn/T/fastcode-emb-model-1826016683...
+2026/02/26 20:23:46 [engine] loaded 1 files from fastcode-emb-model-1826016683
+2026/02/26 20:23:46 [indexer] indexed 2 elements from fastcode-emb-model-1826016683 (1 files)
+
+✅ Indexed fastcode-emb-model-1826016683 in 0s
+   Files:    1
+   Elements: 2
+   Graphs:   map[call:map[edges:0 nodes:0] dependency:map[edges:0 nodes:0] inheritance:map[edges:0 nodes:0]]
+--- PASS: TestIndexWithCustomEmbeddingModel (0.00s)
+=== RUN   TestWriteJSON
+--- PASS: TestWriteJSON (0.00s)
+=== RUN   TestWriteError
+--- PASS: TestWriteError (0.00s)
+=== RUN   TestWriteToolResult
+--- PASS: TestWriteToolResult (0.00s)
+=== RUN   TestVersionVar
+--- PASS: TestVersionVar (0.00s)
+=== RUN   TestMCPInitialize
+--- PASS: TestMCPInitialize (0.00s)
+=== RUN   TestMCPToolsList
+--- PASS: TestMCPToolsList (0.00s)
+=== RUN   TestMCPHealth
+--- PASS: TestMCPHealth (0.00s)
+=== RUN   TestMCPToolsCallIndexRepository
+2026/02/26 20:23:46 [engine] loaded 1 files from fastcode-mcp-test-1779133409
+2026/02/26 20:23:46 [indexer] indexed 4 elements from fastcode-mcp-test-1779133409 (1 files)
+--- PASS: TestMCPToolsCallIndexRepository (0.00s)
+=== RUN   TestMCPToolsCallIndexMissingPath
+--- PASS: TestMCPToolsCallIndexMissingPath (0.00s)
+=== RUN   TestMCPToolsCallIndexInvalidPath
+--- PASS: TestMCPToolsCallIndexInvalidPath (0.00s)
+=== RUN   TestMCPToolsCallQueryMissingQuestion
+--- PASS: TestMCPToolsCallQueryMissingQuestion (0.00s)
+=== RUN   TestMCPToolsCallQueryWithoutIndex
+--- PASS: TestMCPToolsCallQueryWithoutIndex (0.00s)
+=== RUN   TestMCPToolsCallQueryWithRepo
+2026/02/26 20:23:46 [engine] loaded 1 files from fastcode-mcp-test-1782517797
+2026/02/26 20:23:46 [indexer] indexed 4 elements from fastcode-mcp-test-1782517797 (1 files)
+2026/02/26 20:23:46 [engine] query type=understand complexity=15 keywords=[functions exist]
+--- PASS: TestMCPToolsCallQueryWithRepo (0.00s)
+=== RUN   TestMCPToolsCallQueryWithInvalidRepo
+--- PASS: TestMCPToolsCallQueryWithInvalidRepo (0.00s)
+=== RUN   TestMCPToolsCallUnknownTool
+--- PASS: TestMCPToolsCallUnknownTool (0.00s)
+=== RUN   TestMCPToolsCallInvalidBody
+--- PASS: TestMCPToolsCallInvalidBody (0.00s)
+=== RUN   TestMCPToolsCallIndexThenQuery
+2026/02/26 20:23:46 [engine] loaded 1 files from fastcode-mcp-test-1906967935
+2026/02/26 20:23:46 [indexer] indexed 4 elements from fastcode-mcp-test-1906967935 (1 files)
+2026/02/26 20:23:46 [engine] query type=understand complexity=15 keywords=[server struct]
+--- PASS: TestMCPToolsCallIndexThenQuery (0.00s)
+=== RUN   TestMCPToolsCallIndexWithForce
+2026/02/26 20:23:46 [engine] loaded 1 files from fastcode-mcp-test-3069346286
+2026/02/26 20:23:46 [indexer] indexed 4 elements from fastcode-mcp-test-3069346286 (1 files)
+2026/02/26 20:23:46 [engine] loaded 1 files from fastcode-mcp-test-3069346286
+2026/02/26 20:23:46 [indexer] indexed 4 elements from fastcode-mcp-test-3069346286 (1 files)
+--- PASS: TestMCPToolsCallIndexWithForce (0.00s)
+PASS
+coverage: 90.6% of statements
+ok  	github.com/duyhunghd6/fastcode-cli/cmd/fastcode	1.190s	coverage: 90.6% of statements
+=== RUN   TestNewAnswerGenerator
+--- PASS: TestNewAnswerGenerator (0.00s)
+=== RUN   TestTruncateStr
+--- PASS: TestTruncateStr (0.00s)
+=== RUN   TestAnswerSystemPrompt
+--- PASS: TestAnswerSystemPrompt (0.00s)
+=== RUN   TestBuildPromptNoElements
+--- PASS: TestBuildPromptNoElements (0.00s)
+=== RUN   TestBuildPromptWithElements
+--- PASS: TestBuildPromptWithElements (0.00s)
+=== RUN   TestBuildPromptManyElements
+--- PASS: TestBuildPromptManyElements (0.00s)
+=== RUN   TestGenerateAnswer
+--- PASS: TestGenerateAnswer (0.00s)
+=== RUN   TestGenerateAnswerError
+--- PASS: TestGenerateAnswerError (0.00s)
+=== RUN   TestSearchCodeWithEmbedder
+--- PASS: TestSearchCodeWithEmbedder (0.00s)
+=== RUN   TestSearchCodeWithEmbedderError
+--- PASS: TestSearchCodeWithEmbedderError (0.00s)
+=== RUN   TestBrowseFileSuffixMatch
+--- PASS: TestBrowseFileSuffixMatch (0.00s)
+=== RUN   TestListFilesCaseInsensitive
+--- PASS: TestListFilesCaseInsensitive (0.00s)
+=== RUN   TestSearchGraph
+--- PASS: TestSearchGraph (0.00s)
+=== RUN   TestExtractKeywords
+--- PASS: TestExtractKeywords (0.00s)
+=== RUN   TestExtractKeywordsDuplication
+--- PASS: TestExtractKeywordsDuplication (0.00s)
+=== RUN   TestExtractKeywordsShortWords
+--- PASS: TestExtractKeywordsShortWords (0.00s)
+=== RUN   TestScoreComplexityLow
+--- PASS: TestScoreComplexityLow (0.00s)
+=== RUN   TestScoreComplexityMedium
+--- PASS: TestScoreComplexityMedium (0.00s)
+=== RUN   TestScoreComplexityHigh
+--- PASS: TestScoreComplexityHigh (0.00s)
+=== RUN   TestScoreComplexityCapsAt100
+--- PASS: TestScoreComplexityCapsAt100 (0.00s)
+=== RUN   TestClassifyQueryLocate
+--- PASS: TestClassifyQueryLocate (0.00s)
+=== RUN   TestClassifyQueryDebug
+--- PASS: TestClassifyQueryDebug (0.00s)
+=== RUN   TestClassifyQueryHowto
+--- PASS: TestClassifyQueryHowto (0.00s)
+=== RUN   TestClassifyQueryOverview
+--- PASS: TestClassifyQueryOverview (0.00s)
+=== RUN   TestClassifyQueryUnderstand
+--- PASS: TestClassifyQueryUnderstand (0.00s)
+=== RUN   TestBuildRoundPromptWithGatheredElements
+--- PASS: TestBuildRoundPromptWithGatheredElements (0.00s)
+=== RUN   TestBuildRoundPromptManyGatheredElements
+--- PASS: TestBuildRoundPromptManyGatheredElements (0.00s)
+=== RUN   TestNewIterativeAgentWithZeroConfig
+--- PASS: TestNewIterativeAgentWithZeroConfig (0.00s)
+=== RUN   TestRetrieveNoMoreActions
+--- PASS: TestRetrieveNoMoreActions (0.00s)
+=== RUN   TestRetrieveLowComplexityFewRounds
+--- PASS: TestRetrieveLowComplexityFewRounds (0.00s)
+=== RUN   TestRetrieveToolCallExecution
+--- PASS: TestRetrieveToolCallExecution (0.00s)
+=== RUN   TestDeduplicateElements
+--- PASS: TestDeduplicateElements (0.00s)
+=== RUN   TestExtractJSON
+--- PASS: TestExtractJSON (0.00s)
+=== RUN   TestExtractJSONUnterminatedBrace
+--- PASS: TestExtractJSONUnterminatedBrace (0.00s)
+=== RUN   TestParseRoundResponseNoJSON
+--- PASS: TestParseRoundResponseNoJSON (0.00s)
+=== RUN   TestParseRoundResponseInvalidJSONFallback
+--- PASS: TestParseRoundResponseInvalidJSONFallback (0.00s)
+=== RUN   TestParseRoundResponseValidJSONWithToolCalls
+--- PASS: TestParseRoundResponseValidJSONWithToolCalls (0.00s)
+=== RUN   TestParseRoundResponseHighConfidence
+--- PASS: TestParseRoundResponseHighConfidence (0.00s)
+=== RUN   TestExtractJSONFromMarkdown
+--- PASS: TestExtractJSONFromMarkdown (0.00s)
+=== RUN   TestExtractJSONBareJSON
+--- PASS: TestExtractJSONBareJSON (0.00s)
+=== RUN   TestExtractJSONNoJSON
+--- PASS: TestExtractJSONNoJSON (0.00s)
+=== RUN   TestScoreComplexitySimpleQuery
+--- PASS: TestScoreComplexitySimpleQuery (0.00s)
+=== RUN   TestScoreComplexityMediumQuery
+--- PASS: TestScoreComplexityMediumQuery (0.00s)
+=== RUN   TestScoreComplexityComplex
+--- PASS: TestScoreComplexityComplex (0.00s)
+=== RUN   TestScoreComplexityWithTechIndicator
+--- PASS: TestScoreComplexityWithTechIndicator (0.00s)
+=== RUN   TestScoreComplexityMultiIndicator
+--- PASS: TestScoreComplexityMultiIndicator (0.00s)
+=== RUN   TestScoreComplexityCap100
+--- PASS: TestScoreComplexityCap100 (0.00s)
+=== RUN   TestDeduplicateElementsWithDupes
+--- PASS: TestDeduplicateElementsWithDupes (0.00s)
+=== RUN   TestDeduplicateElementsNoDupes
+--- PASS: TestDeduplicateElementsNoDupes (0.00s)
+=== RUN   TestDeduplicateElementsEmpty
+--- PASS: TestDeduplicateElementsEmpty (0.00s)
+=== RUN   TestClassifyQueryLocateType
+--- PASS: TestClassifyQueryLocateType (0.00s)
+=== RUN   TestClassifyQueryDebugType
+--- PASS: TestClassifyQueryDebugType (0.00s)
+=== RUN   TestClassifyQueryHowtoType
+--- PASS: TestClassifyQueryHowtoType (0.00s)
+=== RUN   TestClassifyQueryOverviewType
+--- PASS: TestClassifyQueryOverviewType (0.00s)
+=== RUN   TestClassifyQueryUnderstandType
+--- PASS: TestClassifyQueryUnderstandType (0.00s)
+=== RUN   TestMinHelperFunc
+--- PASS: TestMinHelperFunc (0.00s)
+=== RUN   TestDefaultAgentConfig
+--- PASS: TestDefaultAgentConfig (0.00s)
+=== RUN   TestNewIterativeAgent
+--- PASS: TestNewIterativeAgent (0.00s)
+=== RUN   TestSystemPrompt
+--- PASS: TestSystemPrompt (0.00s)
+=== RUN   TestMinFunc
+--- PASS: TestMinFunc (0.00s)
+=== RUN   TestParseRoundResponseValidJSON
+--- PASS: TestParseRoundResponseValidJSON (0.00s)
+=== RUN   TestParseRoundResponseCodeFence
+--- PASS: TestParseRoundResponseCodeFence (0.00s)
+=== RUN   TestParseRoundResponseBadJSON
+--- PASS: TestParseRoundResponseBadJSON (0.00s)
+=== RUN   TestBuildRoundPrompt
+--- PASS: TestBuildRoundPrompt (0.00s)
+=== RUN   TestRetrieveHighConfidence
+--- PASS: TestRetrieveHighConfidence (0.00s)
+=== RUN   TestRetrieveLLMError
+2026/02/26 20:23:47 [agent] round 1 error: LLM call: HTTP 500: {"error":{"message":"server down"}}
+--- PASS: TestRetrieveLLMError (0.00s)
+=== RUN   TestProcessQuery
+--- PASS: TestProcessQuery (0.00s)
+=== RUN   TestClassifyQuery
+--- PASS: TestClassifyQuery (0.00s)
+=== RUN   TestScoreComplexity
+--- PASS: TestScoreComplexity (0.00s)
+=== RUN   TestAvailableTools
+--- PASS: TestAvailableTools (0.00s)
+=== RUN   TestNewToolExecutor
+--- PASS: TestNewToolExecutor (0.00s)
+=== RUN   TestToolExecutorSearchCode
+--- PASS: TestToolExecutorSearchCode (0.00s)
+=== RUN   TestToolExecutorBrowseFile
+--- PASS: TestToolExecutorBrowseFile (0.00s)
+=== RUN   TestToolExecutorBrowseFileNotFound
+--- PASS: TestToolExecutorBrowseFileNotFound (0.00s)
+=== RUN   TestToolExecutorSkimFile
+--- PASS: TestToolExecutorSkimFile (0.00s)
+=== RUN   TestToolExecutorSkimFileNotFound
+--- PASS: TestToolExecutorSkimFileNotFound (0.00s)
+=== RUN   TestToolExecutorListFiles
+--- PASS: TestToolExecutorListFiles (0.00s)
+=== RUN   TestToolExecutorListFilesNoMatch
+--- PASS: TestToolExecutorListFilesNoMatch (0.00s)
+=== RUN   TestToolExecutorUnknown
+--- PASS: TestToolExecutorUnknown (0.00s)
+=== RUN   TestProcessQueryEmpty
+--- PASS: TestProcessQueryEmpty (0.00s)
+PASS
+coverage: 97.3% of statements
+ok  	github.com/duyhunghd6/fastcode-cli/internal/agent	1.759s	coverage: 97.3% of statements
+=== RUN   TestNewIndexCache
+--- PASS: TestNewIndexCache (0.00s)
+=== RUN   TestCacheSaveAndLoad
+--- PASS: TestCacheSaveAndLoad (0.00s)
+=== RUN   TestCacheLoadNotExists
+--- PASS: TestCacheLoadNotExists (0.00s)
+=== RUN   TestCacheExistsNotExists
+--- PASS: TestCacheExistsNotExists (0.00s)
+=== RUN   TestCacheDeleteNotExists
+--- PASS: TestCacheDeleteNotExists (0.00s)
+=== RUN   TestCachePath
+--- PASS: TestCachePath (0.00s)
+=== RUN   TestCacheSaveCreatesDir
+--- PASS: TestCacheSaveCreatesDir (0.00s)
+=== RUN   TestCacheSaveEmptyData
+--- PASS: TestCacheSaveEmptyData (0.00s)
+=== RUN   TestSaveMkdirError
+--- PASS: TestSaveMkdirError (0.00s)
+=== RUN   TestSaveCreateFileError
+--- PASS: TestSaveCreateFileError (0.00s)
+=== RUN   TestSaveAndLoadRoundTrip
+--- PASS: TestSaveAndLoadRoundTrip (0.00s)
+=== RUN   TestLoadCorruptFile
+--- PASS: TestLoadCorruptFile (0.00s)
+=== RUN   TestLoadNonexistent
+--- PASS: TestLoadNonexistent (0.00s)
+=== RUN   TestDeleteNonexistent
+--- PASS: TestDeleteNonexistent (0.00s)
+=== RUN   TestDeleteExisting
+--- PASS: TestDeleteExisting (0.00s)
+=== RUN   TestCachePathGeneration
+--- PASS: TestCachePathGeneration (0.00s)
+=== RUN   TestSaveEmptyData
+--- PASS: TestSaveEmptyData (0.00s)
+PASS
+coverage: 96.7% of statements
+ok  	github.com/duyhunghd6/fastcode-cli/internal/cache	5.180s	coverage: 96.7% of statements
+=== RUN   TestBuildDependencyGraphWithImports
+--- PASS: TestBuildDependencyGraphWithImports (0.00s)
+=== RUN   TestBuildDependencyGraphNoImports
+--- PASS: TestBuildDependencyGraphNoImports (0.00s)
+=== RUN   TestBuildDependencyGraphWrongImportType
+--- PASS: TestBuildDependencyGraphWrongImportType (0.00s)
+=== RUN   TestBuildInheritanceGraphWithBases
+--- PASS: TestBuildInheritanceGraphWithBases (0.00s)
+=== RUN   TestBuildInheritanceGraphNoBases
+--- PASS: TestBuildInheritanceGraphNoBases (0.00s)
+=== RUN   TestBuildInheritanceGraphWrongBasesType
+--- PASS: TestBuildInheritanceGraphWrongBasesType (0.00s)
+=== RUN   TestBuildCallGraphWithCalls
+--- PASS: TestBuildCallGraphWithCalls (0.00s)
+=== RUN   TestBuildCallGraphNoCalls
+--- PASS: TestBuildCallGraphNoCalls (0.00s)
+=== RUN   TestBuildCallGraphWrongCallsType
+--- PASS: TestBuildCallGraphWrongCallsType (0.00s)
+=== RUN   TestBuildCallGraphUnresolvedCallee
+--- PASS: TestBuildCallGraphUnresolvedCallee (0.00s)
+=== RUN   TestResolveImportDotPath
+--- PASS: TestResolveImportDotPath (0.00s)
+=== RUN   TestResolveImportEmpty
+--- PASS: TestResolveImportEmpty (0.00s)
+=== RUN   TestResolveImportNoMatchUnrelated
+--- PASS: TestResolveImportNoMatchUnrelated (0.00s)
+=== RUN   TestBuildDependencyGraphSkipsNonFileElements
+--- PASS: TestBuildDependencyGraphSkipsNonFileElements (0.00s)
+=== RUN   TestGraphAddEdge
+--- PASS: TestGraphAddEdge (0.00s)
+=== RUN   TestGraphNoDuplicateEdges
+--- PASS: TestGraphNoDuplicateEdges (0.00s)
+=== RUN   TestGraphNoSelfLoop
+--- PASS: TestGraphNoSelfLoop (0.00s)
+=== RUN   TestGraphEmptySuccessors
+--- PASS: TestGraphEmptySuccessors (0.00s)
+=== RUN   TestGraphEmptyPredecessors
+--- PASS: TestGraphEmptyPredecessors (0.00s)
+=== RUN   TestGraphEmptyNodeCount
+--- PASS: TestGraphEmptyNodeCount (0.00s)
+=== RUN   TestGraphEmptyEdgeCount
+--- PASS: TestGraphEmptyEdgeCount (0.00s)
+=== RUN   TestNewCodeGraphs
+--- PASS: TestNewCodeGraphs (0.00s)
+=== RUN   TestGetRelatedElements
+--- PASS: TestGetRelatedElements (0.00s)
+=== RUN   TestGetRelatedElementsMultipleGraphs
+--- PASS: TestGetRelatedElementsMultipleGraphs (0.00s)
+=== RUN   TestGetRelatedElementsZeroHops
+--- PASS: TestGetRelatedElementsZeroHops (0.00s)
+=== RUN   TestGetRelatedElementsReverse
+--- PASS: TestGetRelatedElementsReverse (0.00s)
+=== RUN   TestGenerateElementID
+--- PASS: TestGenerateElementID (0.00s)
+=== RUN   TestBuildInheritanceGraph
+--- PASS: TestBuildInheritanceGraph (0.00s)
+=== RUN   TestBuildCallGraph
+--- PASS: TestBuildCallGraph (0.00s)
+=== RUN   TestBuildDependencyGraph
+--- PASS: TestBuildDependencyGraph (0.00s)
+=== RUN   TestStats
+--- PASS: TestStats (0.00s)
+=== RUN   TestResolveImportModulePath
+--- PASS: TestResolveImportModulePath (0.00s)
+=== RUN   TestResolveImportNoMatch
+--- PASS: TestResolveImportNoMatch (0.00s)
+=== RUN   TestResolveImportEmptyModule
+--- PASS: TestResolveImportEmptyModule (0.00s)
+=== RUN   TestBuildGraphsNoMetadata
+--- PASS: TestBuildGraphsNoMetadata (0.00s)
+PASS
+coverage: 100.0% of statements
+ok  	github.com/duyhunghd6/fastcode-cli/internal/graph	5.613s	coverage: 100.0% of statements
+=== RUN   TestBM25AddAndSearch
+--- PASS: TestBM25AddAndSearch (0.00s)
+=== RUN   TestBM25EmptyQuery
+--- PASS: TestBM25EmptyQuery (0.00s)
+=== RUN   TestBM25NoMatch
+--- PASS: TestBM25NoMatch (0.00s)
+=== RUN   TestBM25DocCount
+--- PASS: TestBM25DocCount (0.00s)
+=== RUN   TestBM25DefaultParams
+--- PASS: TestBM25DefaultParams (0.00s)
+=== RUN   TestBM25SearchEmptyIndex
+--- PASS: TestBM25SearchEmptyIndex (0.00s)
+=== RUN   TestBM25SearchTopKGreaterThanResults
+--- PASS: TestBM25SearchTopKGreaterThanResults (0.00s)
+=== RUN   TestBM25SearchSingleDoc
+--- PASS: TestBM25SearchSingleDoc (0.00s)
+=== RUN   TestTokenize
+--- PASS: TestTokenize (0.00s)
+=== RUN   TestTokenizeEmpty
+--- PASS: TestTokenizeEmpty (0.00s)
+=== RUN   TestTokenizeShortTokens
+--- PASS: TestTokenizeShortTokens (0.00s)
+=== RUN   TestTokenizeSpecialChars
+--- PASS: TestTokenizeSpecialChars (0.00s)
+=== RUN   TestIndexRepositorySkipUnreadable
+2026/02/26 20:23:50 [indexer] skip secret.go: open /var/folders/b2/89vlkn591w1bk8nwgf535wt00000gn/T/indexer-skip-4181733953/secret.go: permission denied
+2026/02/26 20:23:50 [indexer] indexed 2 elements from test-repo (2 files)
+--- PASS: TestIndexRepositorySkipUnreadable (0.00s)
+=== RUN   TestIndexRepositoryUnsupportedFile
+2026/02/26 20:23:50 [indexer] indexed 2 elements from test-repo (2 files)
+--- PASS: TestIndexRepositoryUnsupportedFile (0.00s)
+=== RUN   TestIndexRepositoryWithClassAndDocstring
+2026/02/26 20:23:50 [indexer] indexed 4 elements from test-repo (1 files)
+--- PASS: TestIndexRepositoryWithClassAndDocstring (0.00s)
+=== RUN   TestExtractCodeBlockEdgeCases
+--- PASS: TestExtractCodeBlockEdgeCases (0.00s)
+=== RUN   TestTruncate
+--- PASS: TestTruncate (0.00s)
+=== RUN   TestGenIDUniqueness
+--- PASS: TestGenIDUniqueness (0.00s)
+=== RUN   TestGenerateFileSummaryWithClasses
+    extra_test.go:222: summary: Language: go, Lines: 100; Classes: Server, Client; Functions: main, helper
+--- PASS: TestGenerateFileSummaryWithClasses (0.00s)
+=== RUN   TestGenerateFileSummaryMinimal
+--- PASS: TestGenerateFileSummaryMinimal (0.00s)
+=== RUN   TestHybridRetrieverBM25Only
+--- PASS: TestHybridRetrieverBM25Only (0.00s)
+=== RUN   TestHybridRetrieverElementCount
+--- PASS: TestHybridRetrieverElementCount (0.00s)
+=== RUN   TestNewHybridRetriever
+--- PASS: TestNewHybridRetriever (0.00s)
+=== RUN   TestHybridSearchEmpty
+--- PASS: TestHybridSearchEmpty (0.00s)
+=== RUN   TestHybridSearchWithVectors
+--- PASS: TestHybridSearchWithVectors (0.00s)
+=== RUN   TestHybridIndexElementsWithEmbedder
+--- PASS: TestHybridIndexElementsWithEmbedder (0.00s)
+=== RUN   TestHybridIndexElementsEmbedderError
+--- PASS: TestHybridIndexElementsEmbedderError (0.00s)
+=== RUN   TestHybridSearchTopKGreaterThanResults
+--- PASS: TestHybridSearchTopKGreaterThanResults (0.00s)
+=== RUN   TestNewIndexer
+--- PASS: TestNewIndexer (0.00s)
+=== RUN   TestIndexRepository
+2026/02/26 20:23:50 [indexer] indexed 8 elements from fastcode-indexer-test-874587891 (2 files)
+--- PASS: TestIndexRepository (0.00s)
+=== RUN   TestIndexRepositoryWithDocElement
+2026/02/26 20:23:50 [indexer] indexed 3 elements from fastcode-indexer-doc-868502835 (1 files)
+--- PASS: TestIndexRepositoryWithDocElement (0.00s)
+=== RUN   TestExtractCodeBlock
+--- PASS: TestExtractCodeBlock (0.00s)
+=== RUN   TestTruncateIndex
+--- PASS: TestTruncateIndex (0.00s)
+=== RUN   TestGenerateFileSummary
+--- PASS: TestGenerateFileSummary (0.00s)
+=== RUN   TestGenerateFileSummaryEmpty
+--- PASS: TestGenerateFileSummaryEmpty (0.00s)
+=== RUN   TestGenID
+--- PASS: TestGenID (0.00s)
+=== RUN   TestVectorStoreAddAndSearch
+--- PASS: TestVectorStoreAddAndSearch (0.00s)
+=== RUN   TestVectorStoreEmpty
+--- PASS: TestVectorStoreEmpty (0.00s)
+=== RUN   TestVectorStoreSearchEmptyQuery
+--- PASS: TestVectorStoreSearchEmptyQuery (0.00s)
+=== RUN   TestVectorStoreSearchTopKExceedsResults
+--- PASS: TestVectorStoreSearchTopKExceedsResults (0.00s)
+=== RUN   TestCosineSimilarity
+--- PASS: TestCosineSimilarity (0.00s)
+=== RUN   TestCosineSimilarityLengthMismatch
+--- PASS: TestCosineSimilarityLengthMismatch (0.00s)
+=== RUN   TestCosineSimilarityEmpty
+--- PASS: TestCosineSimilarityEmpty (0.00s)
+=== RUN   TestCosineSimilarityZeroVector
+--- PASS: TestCosineSimilarityZeroVector (0.00s)
+=== RUN   TestVectorStoreCount
+--- PASS: TestVectorStoreCount (0.00s)
+=== RUN   TestVectorStoreDimensionEmpty
+--- PASS: TestVectorStoreDimensionEmpty (0.00s)
+=== RUN   TestVectorStoreGet
+--- PASS: TestVectorStoreGet (0.00s)
+=== RUN   TestVectorStoreGetNotFound
+--- PASS: TestVectorStoreGetNotFound (0.00s)
+=== RUN   TestNewVectorStore
+--- PASS: TestNewVectorStore (0.00s)
+PASS
+coverage: 99.5% of statements
+ok  	github.com/duyhunghd6/fastcode-cli/internal/index	4.716s	coverage: 99.5% of statements
+=== RUN   TestNewClient
+--- PASS: TestNewClient (0.00s)
+=== RUN   TestNewClientDefaults
+--- PASS: TestNewClientDefaults (0.00s)
+=== RUN   TestNewClientWith
+--- PASS: TestNewClientWith (0.00s)
+=== RUN   TestChatCompletion
+--- PASS: TestChatCompletion (0.00s)
+=== RUN   TestChatCompletionNoChoices
+--- PASS: TestChatCompletionNoChoices (0.00s)
+=== RUN   TestChatCompletionAPIError
+--- PASS: TestChatCompletionAPIError (0.00s)
+=== RUN   TestChatCompletionAPIErrorInBody
+--- PASS: TestChatCompletionAPIErrorInBody (0.00s)
+=== RUN   TestChatCompletionParseError
+--- PASS: TestChatCompletionParseError (0.00s)
+=== RUN   TestEmbed
+--- PASS: TestEmbed (0.00s)
+=== RUN   TestEmbedDefaultModel
+--- PASS: TestEmbedDefaultModel (0.00s)
+=== RUN   TestEmbedAPIError
+--- PASS: TestEmbedAPIError (0.00s)
+=== RUN   TestEmbedParseError
+--- PASS: TestEmbedParseError (0.00s)
+=== RUN   TestPostNoAPIKey
+--- PASS: TestPostNoAPIKey (0.00s)
+=== RUN   TestBuildSearchText
+--- PASS: TestBuildSearchText (0.00s)
+=== RUN   TestBuildSearchTextAllEmpty
+--- PASS: TestBuildSearchTextAllEmpty (0.00s)
+=== RUN   TestBuildSearchTextCodeTruncation
+--- PASS: TestBuildSearchTextCodeTruncation (0.00s)
+=== RUN   TestGetEnvOr
+--- PASS: TestGetEnvOr (0.00s)
+=== RUN   TestNewEmbedder
+--- PASS: TestNewEmbedder (0.00s)
+=== RUN   TestNewEmbedderCustom
+--- PASS: TestNewEmbedderCustom (0.00s)
+=== RUN   TestEmbedTextsEmpty
+--- PASS: TestEmbedTextsEmpty (0.00s)
+=== RUN   TestEmbedTextsSingle
+--- PASS: TestEmbedTextsSingle (0.00s)
+=== RUN   TestEmbedTextsBatching
+2026/02/26 20:23:48 [embedder] embedded 2/5 texts
+2026/02/26 20:23:48 [embedder] embedded 4/5 texts
+--- PASS: TestEmbedTextsBatching (0.00s)
+=== RUN   TestEmbedTextsError
+--- PASS: TestEmbedTextsError (0.00s)
+=== RUN   TestEmbedTextSingle
+--- PASS: TestEmbedTextSingle (0.00s)
+=== RUN   TestEmbedTextError
+--- PASS: TestEmbedTextError (0.00s)
+=== RUN   TestEmbedTextNilResult
+--- PASS: TestEmbedTextNilResult (0.00s)
+=== RUN   TestPostMarshalError
+--- PASS: TestPostMarshalError (0.00s)
+=== RUN   TestPostHTTPConnectionError
+--- PASS: TestPostHTTPConnectionError (0.00s)
+=== RUN   TestPostHTTPStatusError
+--- PASS: TestPostHTTPStatusError (0.00s)
+=== RUN   TestPostSuccessWithAuth
+--- PASS: TestPostSuccessWithAuth (0.00s)
+=== RUN   TestPostNoAuthHeader
+--- PASS: TestPostNoAuthHeader (0.00s)
+=== RUN   TestGetEnvOrExistsExtra
+--- PASS: TestGetEnvOrExistsExtra (0.00s)
+=== RUN   TestGetEnvOrFallbackExtra
+--- PASS: TestGetEnvOrFallbackExtra (0.00s)
+=== RUN   TestChatCompletionServerError
+--- PASS: TestChatCompletionServerError (0.00s)
+=== RUN   TestChatCompletionEmptyChoicesExtra
+--- PASS: TestChatCompletionEmptyChoicesExtra (0.00s)
+PASS
+coverage: 97.8% of statements
+ok  	github.com/duyhunghd6/fastcode-cli/internal/llm	3.453s	coverage: 97.8% of statements
+=== RUN   TestLoadRepositoryMaxFileSize
+--- PASS: TestLoadRepositoryMaxFileSize (0.00s)
+=== RUN   TestLoadRepositoryExcludeFilePatterns
+--- PASS: TestLoadRepositoryExcludeFilePatterns (0.00s)
+=== RUN   TestLoadRepositoryExcludeDirs
+--- PASS: TestLoadRepositoryExcludeDirs (0.00s)
+=== RUN   TestLoadRepositoryGitignore
+--- PASS: TestLoadRepositoryGitignore (0.00s)
+=== RUN   TestLoadRepositoryDotDirSkipped
+--- PASS: TestLoadRepositoryDotDirSkipped (0.00s)
+=== RUN   TestLoadRepositoryNotADir
+--- PASS: TestLoadRepositoryNotADir (0.00s)
+=== RUN   TestMatchGitignoreNegation
+--- PASS: TestMatchGitignoreNegation (0.00s)
+=== RUN   TestMatchGitignoreDirSuffix
+--- PASS: TestMatchGitignoreDirSuffix (0.00s)
+=== RUN   TestMatchGitignoreFullPath
+--- PASS: TestMatchGitignoreFullPath (0.00s)
+=== RUN   TestLoadGitignoreNoFilePresent
+--- PASS: TestLoadGitignoreNoFilePresent (0.00s)
+=== RUN   TestLoadGitignoreWithComments
+--- PASS: TestLoadGitignoreWithComments (0.00s)
+=== RUN   TestReadFileContentError
+--- PASS: TestReadFileContentError (0.00s)
+=== RUN   TestReadFileContentSuccess
+--- PASS: TestReadFileContentSuccess (0.00s)
+=== RUN   TestLoadRepositoryWalkDirError
+--- PASS: TestLoadRepositoryWalkDirError (0.00s)
+=== RUN   TestLoadRepositoryGitignoreSkipsDir
+--- PASS: TestLoadRepositoryGitignoreSkipsDir (0.00s)
+=== RUN   TestLoadRepositoryGitignoreSkipsFile
+--- PASS: TestLoadRepositoryGitignoreSkipsFile (0.00s)
+=== RUN   TestLoadRepositoryExcludeDirsSkip
+--- PASS: TestLoadRepositoryExcludeDirsSkip (0.00s)
+=== RUN   TestLoadRepositoryUnsupportedFileSkipped
+--- PASS: TestLoadRepositoryUnsupportedFileSkipped (0.00s)
+=== RUN   TestLoadRepositoryAbsResolution
+--- PASS: TestLoadRepositoryAbsResolution (0.00s)
+=== RUN   TestDefaultConfig
+--- PASS: TestDefaultConfig (0.00s)
+=== RUN   TestLoadRepository
+--- PASS: TestLoadRepository (0.00s)
+=== RUN   TestLoadRepositoryNonExistent
+--- PASS: TestLoadRepositoryNonExistent (0.00s)
+=== RUN   TestLoadRepositoryNotDir
+--- PASS: TestLoadRepositoryNotDir (0.00s)
+=== RUN   TestLoadRepositoryNoGitignore
+--- PASS: TestLoadRepositoryNoGitignore (0.00s)
+=== RUN   TestLoadRepositoryExcludeFiles
+--- PASS: TestLoadRepositoryExcludeFiles (0.00s)
+=== RUN   TestReadFileContent
+--- PASS: TestReadFileContent (0.00s)
+=== RUN   TestMatchGitignore
+--- PASS: TestMatchGitignore (0.00s)
+=== RUN   TestLoadGitignoreNoFile
+--- PASS: TestLoadGitignoreNoFile (0.00s)
+=== RUN   TestLoadGitignoreComments
+--- PASS: TestLoadGitignoreComments (0.00s)
+=== RUN   TestFileInfoLanguage
+--- PASS: TestFileInfoLanguage (0.00s)
+=== RUN   TestLoadRepositoryDotDir
+--- PASS: TestLoadRepositoryDotDir (0.00s)
+PASS
+coverage: 92.8% of statements
+ok  	github.com/duyhunghd6/fastcode-cli/internal/loader	6.095s	coverage: 92.8% of statements
+=== RUN   TestE2EFullPipeline
+2026/02/26 20:23:47 [engine] loaded 3 files from fastcode-e2e-3434976386
+2026/02/26 20:23:47 [indexer] indexed 14 elements from fastcode-e2e-3434976386 (3 files)
+2026/02/26 20:23:47 [engine] query type=howto complexity=15 keywords=[configuration work]
+2026/02/26 20:23:47 [engine] loaded 3 files from fastcode-e2e-3434976386
+2026/02/26 20:23:47 [engine] loaded 14 elements from cache
+2026/02/26 20:23:47 [engine] query type=understand complexity=15 keywords=[classes exist codebase]
+2026/02/26 20:23:47 [engine] loaded 3 files from fastcode-e2e-3434976386
+2026/02/26 20:23:47 [indexer] indexed 14 elements from fastcode-e2e-3434976386 (3 files)
+--- PASS: TestE2EFullPipeline (0.01s)
+=== RUN   TestE2EEmptyRepository
+2026/02/26 20:23:47 [engine] loaded 0 files from fastcode-e2e-empty-1966513432
+2026/02/26 20:23:47 [indexer] indexed 0 elements from fastcode-e2e-empty-1966513432 (0 files)
+--- PASS: TestE2EEmptyRepository (0.00s)
+=== RUN   TestDefaultConfig
+--- PASS: TestDefaultConfig (0.00s)
+=== RUN   TestEngineInit
+--- PASS: TestEngineInit (0.00s)
+=== RUN   TestEngineIndex
+2026/02/26 20:23:47 [engine] loaded 2 files from fastcode-repo-4154650498
+2026/02/26 20:23:47 [indexer] indexed 5 elements from fastcode-repo-4154650498 (2 files)
+--- PASS: TestEngineIndex (0.00s)
+=== RUN   TestEngineIndexCached
+2026/02/26 20:23:47 [engine] loaded 1 files from fastcode-repo-2985922372
+2026/02/26 20:23:47 [indexer] indexed 2 elements from fastcode-repo-2985922372 (1 files)
+2026/02/26 20:23:47 [engine] loaded 1 files from fastcode-repo-2985922372
+2026/02/26 20:23:47 [engine] loaded 2 elements from cache
+--- PASS: TestEngineIndexCached (0.00s)
+=== RUN   TestEngineQueryWithoutIndex
+--- PASS: TestEngineQueryWithoutIndex (0.00s)
+=== RUN   TestEngineQueryDirect
+2026/02/26 20:23:47 [engine] loaded 1 files from fastcode-repo-583522759
+2026/02/26 20:23:47 [indexer] indexed 3 elements from fastcode-repo-583522759 (1 files)
+2026/02/26 20:23:47 [engine] query type=howto complexity=15 keywords=[config loading work]
+--- PASS: TestEngineQueryDirect (0.00s)
+=== RUN   TestSimpleAnswerEmpty
+--- PASS: TestSimpleAnswerEmpty (0.00s)
+=== RUN   TestSimpleAnswerWithResults
+--- PASS: TestSimpleAnswerWithResults (0.00s)
+=== RUN   TestEngineIndexInvalidPath
+--- PASS: TestEngineIndexInvalidPath (0.00s)
+=== RUN   TestIndexCacheLoadError
+2026/02/26 20:23:47 [engine] loaded 1 files from fastcode-cache-err-3157059592
+2026/02/26 20:23:47 [indexer] indexed 2 elements from fastcode-cache-err-3157059592 (1 files)
+2026/02/26 20:23:47 [engine] loaded 1 files from fastcode-cache-err-3157059592
+2026/02/26 20:23:47 [engine] cache load failed, re-indexing: decode cache: unexpected EOF
+2026/02/26 20:23:47 [indexer] indexed 2 elements from fastcode-cache-err-3157059592 (1 files)
+--- PASS: TestIndexCacheLoadError (0.00s)
+=== RUN   TestRebuildFromCacheWithVectors
+--- PASS: TestRebuildFromCacheWithVectors (0.00s)
+=== RUN   TestRebuildFromCacheEmptyVectors
+--- PASS: TestRebuildFromCacheEmptyVectors (0.00s)
+=== RUN   TestQueryDirectWithEmbedderSuccess
+2026/02/26 20:23:47 [engine] loaded 1 files from fastcode-qd-emb-2763671073
+2026/02/26 20:23:47 [indexer] indexed 2 elements from fastcode-qd-emb-2763671073 (1 files)
+2026/02/26 20:23:47 [engine] query type=understand complexity=10 keywords=[main function]
+--- PASS: TestQueryDirectWithEmbedderSuccess (0.00s)
+=== RUN   TestQueryWithAgentRetrievalError
+2026/02/26 20:23:47 [engine] loaded 1 files from fastcode-qaerr-3792997242
+2026/02/26 20:23:47 [indexer] indexed 2 elements from fastcode-qaerr-3792997242 (1 files)
+2026/02/26 20:23:47 [engine] query type=understand complexity=10 keywords=[test query]
+2026/02/26 20:23:47 [agent] round 1 error: LLM call: HTTP 500: {"error":{"message":"internal error"}}
+--- PASS: TestQueryWithAgentRetrievalError (0.00s)
+=== RUN   TestQueryWithAgentAnswerError
+2026/02/26 20:23:47 [engine] loaded 1 files from fastcode-qaans-379281707
+2026/02/26 20:23:47 [indexer] indexed 2 elements from fastcode-qaans-379281707 (1 files)
+2026/02/26 20:23:47 [engine] query type=understand complexity=10 keywords=[test query]
+--- PASS: TestQueryWithAgentAnswerError (0.00s)
+=== RUN   TestIndexEmbeddingError
+2026/02/26 20:23:47 [engine] loaded 1 files from fastcode-emb-err-1334662554
+2026/02/26 20:23:47 [indexer] indexed 2 elements from fastcode-emb-err-1334662554 (1 files)
+2026/02/26 20:23:47 [engine] embedding failed (BM25 only): embed batch [0:2]: HTTP 500: {"error":{"message":"embed failed"}}
+--- PASS: TestIndexEmbeddingError (0.00s)
+=== RUN   TestIndexCacheSaveError
+2026/02/26 20:23:47 [engine] loaded 1 files from fastcode-save-err-2848390382
+2026/02/26 20:23:47 [indexer] indexed 2 elements from fastcode-save-err-2848390382 (1 files)
+2026/02/26 20:23:47 [engine] cache save failed: create cache dir: mkdir /dev/null: not a directory
+--- PASS: TestIndexCacheSaveError (0.00s)
+=== RUN   TestGraphsStatsContent
+2026/02/26 20:23:47 [engine] loaded 1 files from fastcode-stats-3506919279
+2026/02/26 20:23:47 [indexer] indexed 4 elements from fastcode-stats-3506919279 (1 files)
+    extra_test.go:355: GraphStats: map[call:map[edges:0 nodes:0] dependency:map[edges:0 nodes:0] inheritance:map[edges:0 nodes:0]]
+--- PASS: TestGraphsStatsContent (0.00s)
+=== RUN   TestEngineDirectVsAgentPath
+2026/02/26 20:23:47 [engine] loaded 1 files from fastcode-path-2281914243
+2026/02/26 20:23:47 [indexer] indexed 2 elements from fastcode-path-2281914243 (1 files)
+2026/02/26 20:23:47 [engine] query type=understand complexity=10 keywords=[test]
+--- PASS: TestEngineDirectVsAgentPath (0.00s)
+=== RUN   TestSimpleAnswerMultipleResults
+--- PASS: TestSimpleAnswerMultipleResults (0.00s)
+=== RUN   TestCodeGraphsIntegration
+--- PASS: TestCodeGraphsIntegration (0.00s)
+=== RUN   TestVectorStoreInRebuild
+--- PASS: TestVectorStoreInRebuild (0.00s)
+PASS
+coverage: 96.6% of statements
+ok  	github.com/duyhunghd6/fastcode-cli/internal/orchestrator	2.416s	coverage: 96.6% of statements
+=== RUN   TestNodeText
+--- PASS: TestNodeText (0.00s)
+=== RUN   TestParserInitNoTSParser
+--- PASS: TestParserInitNoTSParser (0.00s)
+=== RUN   TestParseCSharp
+--- PASS: TestParseCSharp (0.00s)
+=== RUN   TestParseCpp
+--- PASS: TestParseCpp (0.00s)
+=== RUN   TestParseRuby
+2026/02/26 20:23:48 [parser] failed to parse dog.rb: unsupported language: ruby
+--- PASS: TestParseRuby (0.00s)
+=== RUN   TestParseKotlin
+2026/02/26 20:23:48 [parser] failed to parse main.kt: unsupported language: kotlin
+--- PASS: TestParseKotlin (0.00s)
+=== RUN   TestParseGoImportsBlock
+--- PASS: TestParseGoImportsBlock (0.00s)
+=== RUN   TestParsePythonDecoratedMethod
+--- PASS: TestParsePythonDecoratedMethod (0.00s)
+=== RUN   TestParsePythonImportAlias
+--- PASS: TestParsePythonImportAlias (0.00s)
+=== RUN   TestParsePythonFromImportMultiple
+--- PASS: TestParsePythonFromImportMultiple (0.00s)
+=== RUN   TestParsePythonFromImportAliased
+--- PASS: TestParsePythonFromImportAliased (0.00s)
+=== RUN   TestParseJSDocComments
+--- PASS: TestParseJSDocComments (0.00s)
+=== RUN   TestParseJSDefaultExportClass
+--- PASS: TestParseJSDefaultExportClass (0.00s)
+=== RUN   TestParseGoPointerReceiver
+--- PASS: TestParseGoPointerReceiver (0.00s)
+=== RUN   TestParseGoMultipleReturnTypes
+--- PASS: TestParseGoMultipleReturnTypes (0.00s)
+=== RUN   TestParseRustStructImpl
+--- PASS: TestParseRustStructImpl (0.00s)
+=== RUN   TestParseJavaInterface
+    extra_test.go:378: Java interface: classes=0 functions=2
+--- PASS: TestParseJavaInterface (0.00s)
+=== RUN   TestCleanPythonDocstringMultiline
+--- PASS: TestCleanPythonDocstringMultiline (0.00s)
+=== RUN   TestParseGoInterfaceWithMethodSpec
+    final_test.go:28: Writer: 0 methods
+--- PASS: TestParseGoInterfaceWithMethodSpec (0.00s)
+=== RUN   TestParseGoStructWithEmbedded
+    final_test.go:56: Server bases: [sync.Mutex]
+--- PASS: TestParseGoStructWithEmbedded (0.00s)
+=== RUN   TestParseGoImportWithAlias
+    final_test.go:86: import "fmt" alias="."
+    final_test.go:86: import "log" alias="mylog"
+--- PASS: TestParseGoImportWithAlias (0.00s)
+=== RUN   TestParseGoSingleImport
+--- PASS: TestParseGoSingleImport (0.00s)
+=== RUN   TestParseGoMethodWithReceiver
+    final_test.go:140: method Get receiver=Config
+    final_test.go:140: method Set receiver=Config
+--- PASS: TestParseGoMethodWithReceiver (0.00s)
+=== RUN   TestParseGoFuncReturnTypes
+    final_test.go:169: func Open returns=""
+    final_test.go:169: func Count returns="int"
+--- PASS: TestParseGoFuncReturnTypes (0.00s)
+=== RUN   TestParseJSClassWithMethods
+    final_test.go:208: Animal: 3 methods
+--- PASS: TestParseJSClassWithMethods (0.00s)
+=== RUN   TestParseJSFunctionWithAsync
+    final_test.go:240: func fetchData async=true
+    final_test.go:240: func syncFunc async=false
+--- PASS: TestParseJSFunctionWithAsync (0.00s)
+=== RUN   TestParsePythonClassDecorators
+--- PASS: TestParsePythonClassDecorators (0.00s)
+=== RUN   TestParsePythonAliasedImport
+    final_test.go:280: import module="os.path" names=[join path_join] alias="" isFrom=true level=0
+    final_test.go:280: import module="numpy" names=[] alias="np" isFrom=false level=0
+--- PASS: TestParsePythonAliasedImport (0.00s)
+=== RUN   TestParsePythonBlockDocstring
+    final_test.go:306: process docstring: "Process the input data.\n    \n    Args:\n        data: The input to process.\n    \n    Returns:\n        Processed result."
+--- PASS: TestParsePythonBlockDocstring (0.00s)
+=== RUN   TestParseRustBasic
+    final_test.go:339: rust: 2 classes, 3 functions, 0 imports
+--- PASS: TestParseRustBasic (0.00s)
+=== RUN   TestParseCBasic
+    final_test.go:368: c: 0 classes, 0 functions, 0 imports
+--- PASS: TestParseCBasic (0.00s)
+=== RUN   TestParseJavaBasic
+    final_test.go:396: java: 1 classes, 1 functions, 0 imports
+--- PASS: TestParseJavaBasic (0.00s)
+=== RUN   TestParseTypeScriptClass
+    final_test.go:430: ts: 1 classes, 1 functions, 0 imports
+--- PASS: TestParseTypeScriptClass (0.00s)
+=== RUN   TestParseTSXComponent
+    final_test.go:453: tsx: 0 classes, 1 functions, 1 imports
+--- PASS: TestParseTSXComponent (0.00s)
+=== RUN   TestParseGoEmptyTypeSpec
+    final_test.go:469: empty type: 0 classes
+--- PASS: TestParseGoEmptyTypeSpec (0.00s)
+=== RUN   TestNodeTextDirect
+--- PASS: TestNodeTextDirect (0.00s)
+=== RUN   TestNodeTextEmpty
+--- PASS: TestNodeTextEmpty (0.00s)
+=== RUN   TestParseGoInterfaceWithMethods
+    gap_test.go:63: warning: interface methods not extracted (may depend on tree-sitter grammar version), got 0
+--- PASS: TestParseGoInterfaceWithMethods (0.00s)
+=== RUN   TestParseGoInterfaceEmpty
+--- PASS: TestParseGoInterfaceEmpty (0.00s)
+=== RUN   TestParseGoInterfaceEmbedded
+    gap_test.go:117: ReadCloser: kind=interface methods=0 bases=[]
+--- PASS: TestParseGoInterfaceEmbedded (0.00s)
+=== RUN   TestParseGoGenericReceiver
+--- PASS: TestParseGoGenericReceiver (0.00s)
+=== RUN   TestParseGoTypeAlias
+    gap_test.go:173: classes: 2, functions: 0
+--- PASS: TestParseGoTypeAlias (0.00s)
+=== RUN   TestParsePythonRelativeImport
+--- PASS: TestParsePythonRelativeImport (0.00s)
+=== RUN   TestParsePythonClassWithInheritance
+--- PASS: TestParsePythonClassWithInheritance (0.00s)
+=== RUN   TestParsePythonModuleDocstring
+--- PASS: TestParsePythonModuleDocstring (0.00s)
+=== RUN   TestParseJSArrowFunction
+--- PASS: TestParseJSArrowFunction (0.00s)
+=== RUN   TestParseJSImportVariants
+--- PASS: TestParseJSImportVariants (0.00s)
+=== RUN   TestParseGoFunctionWithDoc
+--- PASS: TestParseGoFunctionWithDoc (0.00s)
+=== RUN   TestNewParser
+--- PASS: TestNewParser (0.00s)
+=== RUN   TestParseUnsupportedLanguage
+--- PASS: TestParseUnsupportedLanguage (0.00s)
+=== RUN   TestParseEmptyGoFile
+--- PASS: TestParseEmptyGoFile (0.00s)
+=== RUN   TestParseGoImportGrouped
+--- PASS: TestParseGoImportGrouped (0.00s)
+=== RUN   TestParseGoFile
+--- PASS: TestParseGoFile (0.00s)
+=== RUN   TestParseUnsupportedFile
+--- PASS: TestParseUnsupportedFile (0.00s)
+=== RUN   TestParseGoFunctions
+--- PASS: TestParseGoFunctions (0.00s)
+=== RUN   TestParseGoMethods
+--- PASS: TestParseGoMethods (0.00s)
+=== RUN   TestParseGoInterface
+    parser_test.go:131: interface methods not extracted — may be tree-sitter grammar version difference
+--- PASS: TestParseGoInterface (0.00s)
+=== RUN   TestParseGoImportsSingle
+--- PASS: TestParseGoImportsSingle (0.00s)
+=== RUN   TestParseGoImportsGrouped
+--- PASS: TestParseGoImportsGrouped (0.00s)
+=== RUN   TestParseGoImportsAliased
+--- PASS: TestParseGoImportsAliased (0.00s)
+=== RUN   TestParseGoEmbeddedStruct
+--- PASS: TestParseGoEmbeddedStruct (0.00s)
+=== RUN   TestParseGoReturnTypes
+--- PASS: TestParseGoReturnTypes (0.00s)
+=== RUN   TestParseGoModuleDocstring
+--- PASS: TestParseGoModuleDocstring (0.00s)
+=== RUN   TestParsePythonClass
+--- PASS: TestParsePythonClass (0.00s)
+=== RUN   TestParsePythonFunctions
+--- PASS: TestParsePythonFunctions (0.00s)
+=== RUN   TestParsePythonImports
+--- PASS: TestParsePythonImports (0.00s)
+=== RUN   TestParsePythonDecorators
+--- PASS: TestParsePythonDecorators (0.00s)
+=== RUN   TestParsePythonAsync
+--- PASS: TestParsePythonAsync (0.00s)
+=== RUN   TestParseJSClass
+--- PASS: TestParseJSClass (0.00s)
+=== RUN   TestParseJSFunctions
+--- PASS: TestParseJSFunctions (0.00s)
+=== RUN   TestParseJSArrowFunctions
+--- PASS: TestParseJSArrowFunctions (0.00s)
+=== RUN   TestParseJSImports
+--- PASS: TestParseJSImports (0.00s)
+=== RUN   TestParseJSExport
+--- PASS: TestParseJSExport (0.00s)
+=== RUN   TestParseJavaClass
+--- PASS: TestParseJavaClass (0.00s)
+=== RUN   TestParseRustFunction
+--- PASS: TestParseRustFunction (0.00s)
+=== RUN   TestParseCFunction
+    parser_test.go:562: C functions not extracted — may be tree-sitter grammar version difference
+--- PASS: TestParseCFunction (0.00s)
+=== RUN   TestParseTypeScript
+--- PASS: TestParseTypeScript (0.00s)
+=== RUN   TestParseEmptyFile
+--- PASS: TestParseEmptyFile (0.00s)
+=== RUN   TestParseTSX
+--- PASS: TestParseTSX (0.00s)
+=== RUN   TestTrimQuotes
+--- PASS: TestTrimQuotes (0.00s)
+=== RUN   TestCleanPythonDocstring
+--- PASS: TestCleanPythonDocstring (0.00s)
+PASS
+coverage: 95.5% of statements
+ok  	github.com/duyhunghd6/fastcode-cli/internal/parser	2.946s	coverage: 95.5% of statements
+?   	github.com/duyhunghd6/fastcode-cli/internal/types	[no test files]
+=== RUN   TestGetLanguageFromPath
+--- PASS: TestGetLanguageFromPath (0.00s)
+=== RUN   TestGetLanguageFromExtension
+--- PASS: TestGetLanguageFromExtension (0.00s)
+=== RUN   TestIsSupportedFile
+--- PASS: TestIsSupportedFile (0.00s)
+=== RUN   TestSupportedExtensions
+--- PASS: TestSupportedExtensions (0.00s)
+=== RUN   TestCountLines
+--- PASS: TestCountLines (0.00s)
+=== RUN   TestExtractLines
+--- PASS: TestExtractLines (0.00s)
+=== RUN   TestFilePathToModulePath
+--- PASS: TestFilePathToModulePath (0.00s)
+=== RUN   TestNormalizePath
+--- PASS: TestNormalizePath (0.00s)
+=== RUN   TestRelativePath
+--- PASS: TestRelativePath (0.00s)
+=== RUN   TestRelativePathError
+--- PASS: TestRelativePathError (0.00s)
+PASS
+coverage: 100.0% of statements
+ok  	github.com/duyhunghd6/fastcode-cli/internal/util	0.535s	coverage: 100.0% of statements
+=== RUN   TestParseLanguageSwitchError
+--- PASS: TestParseLanguageSwitchError (0.00s)
+=== RUN   TestParseSameLanguage
+--- PASS: TestParseSameLanguage (0.00s)
+=== RUN   TestParseEmptyLanguage
+--- PASS: TestParseEmptyLanguage (0.00s)
+=== RUN   TestParseSwitchLanguage
+--- PASS: TestParseSwitchLanguage (0.00s)
+=== RUN   TestNewUnsupported
+--- PASS: TestNewUnsupported (0.00s)
+=== RUN   TestSetLanguageMultiple
+--- PASS: TestSetLanguageMultiple (0.00s)
+=== RUN   TestLanguageCaching
+--- PASS: TestLanguageCaching (0.00s)
+=== RUN   TestParserInitGo
+--- PASS: TestParserInitGo (0.00s)
+=== RUN   TestParserUnsupportedLanguage
+--- PASS: TestParserUnsupportedLanguage (0.00s)
+=== RUN   TestSetLanguagePython
+--- PASS: TestSetLanguagePython (0.00s)
+=== RUN   TestSetLanguageJavaScript
+--- PASS: TestSetLanguageJavaScript (0.00s)
+=== RUN   TestSetLanguageUnsupported
+--- PASS: TestSetLanguageUnsupported (0.00s)
+=== RUN   TestParseMultipleLanguages
+--- PASS: TestParseMultipleLanguages (0.00s)
+=== RUN   TestParseSameLanguageNoSwitch
+--- PASS: TestParseSameLanguageNoSwitch (0.00s)
+=== RUN   TestParseEmptyLanguageUsesCurrent
+--- PASS: TestParseEmptyLanguageUsesCurrent (0.00s)
+=== RUN   TestLanguageCacheReuse
+--- PASS: TestLanguageCacheReuse (0.00s)
+=== RUN   TestAllSupportedLanguages
+--- PASS: TestAllSupportedLanguages (0.00s)
+=== RUN   TestParseUnsupportedLanguageInParse
+--- PASS: TestParseUnsupportedLanguageInParse (0.00s)
+PASS
+coverage: 97.4% of statements
+ok  	github.com/duyhunghd6/fastcode-cli/pkg/treesitter	4.015s	coverage: 97.4% of statements
