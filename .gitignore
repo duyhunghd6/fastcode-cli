@@ -1,0 +1,43 @@
+# Binaries
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+fastcode-cli
+
+# Build output
+/bin/
+/dist/
+/build/
+
+# Go test binary
+*.test
+
+# Go coverage
+*.out
+coverage.html
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Environment
+.env
+.env.local
+
+# Data / Index cache
+data/
+repos/
+logs/
+*.faiss
+*.pkl
+__pycache__/
+*.pyc
