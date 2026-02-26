@@ -121,12 +121,20 @@ func TestSearchGraph(t *testing.T) {
 	vs := index.NewVectorStore()
 	bm := index.NewBM25(1.5, 0.75)
 	hr := index.NewHybridRetriever(vs, bm)
-	te := NewToolExecutor(hr, nil, nil)
 
-	// search_graph is not in the Execute switch, should return error
-	_, err := te.Execute("search_graph", "test")
-	if err == nil {
-		t.Error("expected error for unimplemented tool search_graph")
+	elements := []types.CodeElement{
+		{ID: "e1", Name: "playAudio", Type: "function", Code: "func playAudio() {}"},
+	}
+	_ = hr.IndexElements(elements, nil)
+	te := NewToolExecutor(hr, nil, elements)
+
+	// search_graph is now implemented as a stub that falls back to search_code
+	result, err := te.Execute("search_graph", "audio")
+	if err != nil {
+		t.Fatalf("search_graph should not error: %v", err)
+	}
+	if result.ToolName != "search_code" {
+		t.Errorf("ToolName = %q, want search_code (fallback)", result.ToolName)
 	}
 }
 

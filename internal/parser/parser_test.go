@@ -23,10 +23,30 @@ func TestParseGoFile(t *testing.T) {
 func TestParseUnsupportedFile(t *testing.T) {
 	p := New()
 	content := "just some random text"
-	result := p.ParseFile("test.txt", content)
+	result := p.ParseFile("test.xyz", content)
 
 	if result != nil {
-		t.Errorf("ParseFile should return nil for unsupported extensions when GetLanguageFromPath returns empty")
+		t.Errorf("ParseFile should return nil for truly unsupported extensions (.xyz)")
+	}
+}
+
+func TestParseNonCodeFile(t *testing.T) {
+	p := New()
+	content := "# Hello World\n\nThis is a README."
+	result := p.ParseFile("README.md", content)
+
+	if result == nil {
+		t.Fatal("ParseFile should return a basic result for non-code context files (.md)")
+	}
+	if result.Language != "markdown" {
+		t.Errorf("Language = %q, want markdown", result.Language)
+	}
+	if result.TotalLines != 3 {
+		t.Errorf("TotalLines = %d, want 3", result.TotalLines)
+	}
+	// Non-code files should have no classes or functions
+	if len(result.Classes) != 0 || len(result.Functions) != 0 {
+		t.Errorf("Non-code files should have no classes/functions, got %d/%d", len(result.Classes), len(result.Functions))
 	}
 }
 
@@ -448,6 +468,7 @@ const double = (x) => x * 2;
 	if result == nil {
 		t.Fatal("nil")
 	}
+	// Arrow functions in lexical_declaration are extracted as named functions.
 	if len(result.Functions) < 1 {
 		t.Errorf("expected at least 1 arrow function, got %d", len(result.Functions))
 	}

@@ -109,8 +109,9 @@ func TestLoadRepositoryGitignore(t *testing.T) {
 	}
 }
 
-// TestLoadRepositoryDotDirSkipped tests that dot directories are skipped
-func TestLoadRepositoryDotDirSkipped(t *testing.T) {
+// TestLoadRepositoryDotDirLoaded tests that dot directories (except .git) are now loaded
+// This matches Python's behavior which only skips .git specifically.
+func TestLoadRepositoryDotDirLoaded(t *testing.T) {
 	dir, _ := os.MkdirTemp("", "loader-dotdir-*")
 	defer os.RemoveAll(dir)
 
@@ -118,16 +119,29 @@ func TestLoadRepositoryDotDirSkipped(t *testing.T) {
 	os.WriteFile(filepath.Join(dir, ".hidden", "secret.go"), []byte("package hidden\n"), 0644)
 	os.WriteFile(filepath.Join(dir, "main.go"), []byte("package main\n"), 0644)
 
+	// .git should still be excluded (in ExcludeDirs)
+	os.MkdirAll(filepath.Join(dir, ".git"), 0755)
+	os.WriteFile(filepath.Join(dir, ".git", "config.go"), []byte("package git\n"), 0644)
+
 	cfg := DefaultConfig()
 	repo, err := LoadRepository(dir, cfg)
 	if err != nil {
 		t.Fatal(err)
 	}
 
+	// .hidden/secret.go should now be loaded
+	foundHidden := false
 	for _, f := range repo.Files {
 		if f.RelativePath == filepath.Join(".hidden", "secret.go") {
-			t.Error(".hidden dir should be skipped")
+			foundHidden = true
 		}
+		// .git should still be excluded
+		if f.RelativePath == filepath.Join(".git", "config.go") {
+			t.Error(".git dir should still be excluded")
+		}
+	}
+	if !foundHidden {
+		t.Error(".hidden/secret.go should be loaded (dot dirs are no longer blanket-excluded)")
 	}
 }
 

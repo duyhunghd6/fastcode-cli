@@ -38,9 +38,13 @@ type Config struct {
 // DefaultConfig returns the default engine configuration.
 func DefaultConfig() Config {
 	home, _ := os.UserHomeDir()
+	embeddingModel := os.Getenv("EMBEDDING_MODEL")
+	if embeddingModel == "" {
+		embeddingModel = "text-embedding-3-small"
+	}
 	return Config{
 		CacheDir:       filepath.Join(home, ".fastcode", "cache"),
-		EmbeddingModel: "text-embedding-3-small",
+		EmbeddingModel: embeddingModel,
 		BatchSize:      32,
 		NoEmbeddings:   false,
 	}

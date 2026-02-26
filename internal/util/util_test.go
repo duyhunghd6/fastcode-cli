@@ -30,9 +30,12 @@ func TestGetLanguageFromPath(t *testing.T) {
 		{"file.swift", "swift"},
 		{"file.kt", "kotlin"},
 		{"file.scala", "scala"},
-		{"README.md", ""},
+		{"README.md", "markdown"},
 		{"Makefile", ""},
-		{"styles.css", ""},
+		{"styles.css", "css"},
+		{"config.yaml", "yaml"},
+		{"data.json", "json"},
+		{"index.html", "html"},
 	}
 	for _, tt := range tests {
 		got := GetLanguageFromPath(tt.path)
@@ -66,11 +69,14 @@ func TestIsSupportedFile(t *testing.T) {
 	if !IsSupportedFile("main.go") {
 		t.Error("expected main.go to be supported")
 	}
-	if IsSupportedFile("README.md") {
-		t.Error("expected README.md to be unsupported")
+	if !IsSupportedFile("README.md") {
+		t.Error("expected README.md to be supported (non-code context file)")
 	}
 	if !IsSupportedFile("test.py") {
 		t.Error("expected test.py to be supported")
+	}
+	if IsSupportedFile("image.png") {
+		t.Error("expected image.png to be unsupported")
 	}
 }
 

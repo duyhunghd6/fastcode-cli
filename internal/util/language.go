@@ -7,6 +7,7 @@ import (
 
 // Supported language extensions.
 var languageExtensions = map[string]string{
+	// Code languages (parsed with tree-sitter)
 	".go":    "go",
 	".py":    "python",
 	".js":    "javascript",
@@ -27,6 +28,17 @@ var languageExtensions = map[string]string{
 	".swift": "swift",
 	".kt":    "kotlin",
 	".scala": "scala",
+	".pyx":   "python",
+	// Non-code context files (indexed as file-level elements for BM25)
+	".md":   "markdown",
+	".txt":  "text",
+	".json": "json",
+	".yaml": "yaml",
+	".toml": "toml",
+	".html": "html",
+	".css":  "css",
+	".xml":  "xml",
+	".rst":  "rst",
 }
 
 // GetLanguageFromExtension returns the language name for a file extension.

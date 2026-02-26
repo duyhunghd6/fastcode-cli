@@ -12,18 +12,21 @@ import (
 
 // Client is an OpenAI-compatible LLM API client.
 type Client struct {
-	APIKey  string
-	Model   string
-	BaseURL string
-	HTTP    *http.Client
+	APIKey           string
+	Model            string
+	BaseURL          string
+	EmbeddingBaseURL string // Separate base URL for embeddings (optional)
+	HTTP             *http.Client
 }
 
 // NewClient creates a new LLM client from environment variables.
 func NewClient() *Client {
+	baseURL := getEnvOr("BASE_URL", "https://api.openai.com/v1")
 	return &Client{
-		APIKey:  os.Getenv("OPENAI_API_KEY"),
-		Model:   getEnvOr("MODEL", "gpt-4o"),
-		BaseURL: getEnvOr("BASE_URL", "https://api.openai.com/v1"),
+		APIKey:           os.Getenv("OPENAI_API_KEY"),
+		Model:            getEnvOr("MODEL", "gpt-4o"),
+		BaseURL:          baseURL,
+		EmbeddingBaseURL: getEnvOr("EMBEDDING_URL", baseURL),
 		HTTP: &http.Client{
 			Timeout: 120 * time.Second,
 		},
@@ -33,10 +36,11 @@ func NewClient() *Client {
 // NewClientWith creates a client with explicit parameters.
 func NewClientWith(apiKey, model, baseURL string) *Client {
 	return &Client{
-		APIKey:  apiKey,
-		Model:   model,
-		BaseURL: baseURL,
-		HTTP:    &http.Client{Timeout: 120 * time.Second},
+		APIKey:           apiKey,
+		Model:            model,
+		BaseURL:          baseURL,
+		EmbeddingBaseURL: baseURL,
+		HTTP:             &http.Client{Timeout: 120 * time.Second},
 	}
 }
 
@@ -125,7 +129,7 @@ func (c *Client) Embed(texts []string, model string) ([][]float32, error) {
 		Input: texts,
 	}
 
-	body, err := c.post("/embeddings", req)
+	body, err := c.postTo(c.EmbeddingBaseURL, "/embeddings", req)
 	if err != nil {
 		return nil, err
 	}
@@ -152,12 +156,16 @@ func (c *Client) Embed(texts []string, model string) ([][]float32, error) {
 // --- HTTP helper ---
 
 func (c *Client) post(path string, payload any) ([]byte, error) {
+	return c.postTo(c.BaseURL, path, payload)
+}
+
+func (c *Client) postTo(baseURL, path string, payload any) ([]byte, error) {
 	data, err := json.Marshal(payload)
 	if err != nil {
 		return nil, fmt.Errorf("marshal request: %w", err)
 	}
 
-	url := c.BaseURL + path
+	url := baseURL + path
 	req, err := http.NewRequest("POST", url, bytes.NewReader(data))
 	if err != nil {
 		return nil, err

@@ -7,6 +7,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/duyhunghd6/fastcode-cli/internal/config"
 	"github.com/duyhunghd6/fastcode-cli/internal/orchestrator"
 	"github.com/joho/godotenv"
 	"github.com/spf13/cobra"
@@ -15,7 +16,12 @@ import (
 var version = "0.1.0-dev"
 
 func main() {
-	_ = godotenv.Load() // Try to load .env, ignore if missing
+	// Load global config from ~/.fastcode/config.yaml first
+	if _, err := config.Load(); err != nil {
+		log.Printf("warning: config load: %v", err)
+	}
+	// Then load local .env (overrides YAML since env vars take precedence)
+	_ = godotenv.Load()
 
 	rootCmd := buildRootCmd()
 	if err := rootCmd.Execute(); err != nil {
@@ -40,7 +46,7 @@ and LLM-powered iterative retrieval to answer questions about codebases.`,
 	var noEmbeddings bool
 
 	rootCmd.PersistentFlags().StringVar(&cacheDir, "cache-dir", "", "Cache directory (default: ~/.fastcode/cache)")
-	rootCmd.PersistentFlags().StringVar(&embeddingModel, "embedding-model", "text-embedding-3-small", "Embedding model name")
+	rootCmd.PersistentFlags().StringVar(&embeddingModel, "embedding-model", "", "Embedding model name (default: from config)")
 	rootCmd.PersistentFlags().BoolVar(&noEmbeddings, "no-embeddings", false, "Skip embedding generation (BM25 only)")
 
 	buildConfig := func() orchestrator.Config {
@@ -170,6 +176,48 @@ and LLM-powered iterative retrieval to answer questions about codebases.`,
 	}
 	serveMCPCmd.Flags().Int("port", 9999, "Port to listen on")
 	rootCmd.AddCommand(serveMCPCmd)
+
+	// --- completion command ---
+	completionCmd := &cobra.Command{
+		Use:   "completion [bash|zsh|fish|powershell]",
+		Short: "Generate shell completion scripts",
+		Long: `Generate shell completion scripts for fastcode.
+
+To load completions:
+
+Bash:
+  $ source <(fastcode completion bash)
+
+Zsh:
+  $ echo "autoload -U compinit; compinit" >> ~/.zshrc  # once
+  $ fastcode completion zsh > "${fpath[1]}/_fastcode"
+  $ exec zsh
+
+Fish:
+  $ fastcode completion fish | source
+  $ fastcode completion fish > ~/.config/fish/completions/fastcode.fish
+
+PowerShell:
+  PS> fastcode completion powershell | Out-String | Invoke-Expression
+`,
+		DisableFlagsInUseLine: true,
+		ValidArgs:             []string{"bash", "zsh", "fish", "powershell"},
+		Args:                  cobra.MatchAll(cobra.ExactArgs(1), cobra.OnlyValidArgs),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			switch args[0] {
+			case "bash":
+				return cmd.Root().GenBashCompletion(os.Stdout)
+			case "zsh":
+				return cmd.Root().GenZshCompletion(os.Stdout)
+			case "fish":
+				return cmd.Root().GenFishCompletion(os.Stdout, true)
+			case "powershell":
+				return cmd.Root().GenPowerShellCompletionWithDesc(os.Stdout)
+			}
+			return nil
+		},
+	}
+	rootCmd.AddCommand(completionCmd)
 
 	return rootCmd
 }

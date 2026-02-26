@@ -33,6 +33,7 @@ type FunctionInfo struct {
 	Decorators []string `json:"decorators,omitempty"`
 	Complexity int      `json:"complexity,omitempty"`
 	Receiver   string   `json:"receiver,omitempty"` // Go-specific: method receiver
+	Calls      []string `json:"calls,omitempty"`    // function/method names called within this function
 }
 
 // ClassInfo holds extracted class/struct/interface metadata.

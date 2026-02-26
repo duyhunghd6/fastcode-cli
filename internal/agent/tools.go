@@ -64,6 +64,9 @@ func (te *ToolExecutor) Execute(toolName, arg string) (*ToolResult, error) {
 		return te.skimFile(arg)
 	case "list_files":
 		return te.listFiles(arg)
+	case "search_graph":
+		// Stub: fall back to semantic search until graph index is implemented
+		return te.searchCode(arg)
 	default:
 		return nil, fmt.Errorf("unknown tool: %s", toolName)
 	}

@@ -362,7 +362,7 @@ func TestNewParser(t *testing.T) {
 // TestParseUnsupportedLanguage tests parsing a file with unsupported language
 func TestParseUnsupportedLanguage(t *testing.T) {
 	p := New()
-	result := p.ParseFile("data.xml", "<root/>")
+	result := p.ParseFile("data.dat", "binary content")
 	// Should return nil for unsupported language
 	if result != nil {
 		t.Logf("unsupported language returned result: %+v", result)

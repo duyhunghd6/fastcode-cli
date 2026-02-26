@@ -251,13 +251,25 @@ func (cg *CodeGraphs) buildCallGraph(elements []types.CodeElement) {
 			continue
 		}
 		calls, ok := elem.Metadata["calls"]
-		if !ok {
+		if !ok || calls == nil {
 			continue
 		}
-		callList, ok := calls.([]string)
-		if !ok {
+
+		// Handle both []string (in-memory) and []interface{} (from JSON cache)
+		var callList []string
+		switch v := calls.(type) {
+		case []string:
+			callList = v
+		case []interface{}:
+			for _, item := range v {
+				if s, ok := item.(string); ok {
+					callList = append(callList, s)
+				}
+			}
+		default:
 			continue
 		}
+
 		for _, callee := range callList {
 			if targetID, found := funcMap[callee]; found {
 				cg.Call.AddEdge(elem.ID, targetID)

@@ -36,6 +36,12 @@ func (p *Parser) ParseFile(filePath, content string) *types.FileParseResult {
 		TotalLines: util.CountLines(content),
 	}
 
+	// Non-code files (markdown, json, yaml, etc.) don't need tree-sitter parsing.
+	// They're indexed as file-level elements for BM25 keyword search.
+	if !isCodeLanguage(language) {
+		return result
+	}
+
 	code := []byte(content)
 
 	tree, err := p.tsParser.Parse(code, language)
@@ -61,10 +67,22 @@ func (p *Parser) ParseFile(filePath, content string) *types.FileParseResult {
 	case "c", "cpp":
 		parseC(rootNode, code, result)
 	default:
-		// For unsupported languages, just return basic line counts
+		// Fallback for code languages without a dedicated parser
 	}
 
 	return result
+}
+
+// isCodeLanguage returns true if the language has a tree-sitter grammar
+// and should be parsed for classes, functions, and imports.
+func isCodeLanguage(lang string) bool {
+	switch lang {
+	case "go", "python", "javascript", "typescript", "tsx",
+		"java", "rust", "c", "cpp", "csharp", "ruby", "php",
+		"swift", "kotlin", "scala":
+		return true
+	}
+	return false
 }
 
 // nodeText returns the UTF-8 text content of a tree-sitter node.

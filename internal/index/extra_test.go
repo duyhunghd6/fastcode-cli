@@ -43,12 +43,12 @@ func TestIndexRepositorySkipUnreadable(t *testing.T) {
 	}
 }
 
-// TestIndexRepositoryUnsupportedFile tests that unsupported files return nil parse
-func TestIndexRepositoryUnsupportedFile(t *testing.T) {
-	dir, _ := os.MkdirTemp("", "indexer-unsupported-*")
+// TestIndexRepositoryUnsupportedFile tests that non-code files are indexed as file-level elements
+func TestIndexRepositoryNonCodeFile(t *testing.T) {
+	dir, _ := os.MkdirTemp("", "indexer-noncode-*")
 	defer os.RemoveAll(dir)
 
-	// Write a markdown file (unsupported for parsing)
+	// Write a markdown file (non-code but now indexed for BM25)
 	os.WriteFile(filepath.Join(dir, "README.md"), []byte("# Hello"), 0644)
 	os.WriteFile(filepath.Join(dir, "main.go"), []byte("package main\nfunc main() {}\n"), 0644)
 
@@ -56,7 +56,7 @@ func TestIndexRepositoryUnsupportedFile(t *testing.T) {
 		RootPath: dir,
 		Name:     "test-repo",
 		Files: []loader.FileInfo{
-			{Path: filepath.Join(dir, "README.md"), RelativePath: "README.md", Language: ""},
+			{Path: filepath.Join(dir, "README.md"), RelativePath: "README.md", Language: "markdown"},
 			{Path: filepath.Join(dir, "main.go"), RelativePath: "main.go", Language: "go"},
 		},
 	}
@@ -66,9 +66,19 @@ func TestIndexRepositoryUnsupportedFile(t *testing.T) {
 	if err != nil {
 		t.Fatalf("IndexRepository: %v", err)
 	}
-	// Should have elements from main.go only
-	if len(elements) < 2 {
-		t.Errorf("expected at least 2 elements, got %d", len(elements))
+	// Should have elements from both files: main.go (file + function) + README.md (file)
+	if len(elements) < 3 {
+		t.Errorf("expected at least 3 elements (including README.md file element), got %d", len(elements))
+	}
+	// Verify README.md is indexed as a file-level element
+	foundMD := false
+	for _, e := range elements {
+		if e.RelativePath == "README.md" && e.Type == "file" {
+			foundMD = true
+		}
+	}
+	if !foundMD {
+		t.Error("README.md should be indexed as a file-level element")
 	}
 }
 
