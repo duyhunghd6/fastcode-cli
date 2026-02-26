@@ -41,3 +41,5 @@ logs/
 *.pkl
 __pycache__/
 *.pyc
+/fastcode
+.agents
