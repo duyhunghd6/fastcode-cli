@@ -95,7 +95,6 @@ func TestLoadRepository(t *testing.T) {
 	unexpectedFiles := []string{
 		"node_modules/ignored.js",
 		"system.log",
-		"huge.go",
 	}
 
 	for _, fi := range repo.Files {
@@ -163,7 +162,7 @@ func TestLoadRepositoryExcludeFiles(t *testing.T) {
 	defer os.RemoveAll(dir)
 
 	os.WriteFile(filepath.Join(dir, "main.go"), []byte("package main\n"), 0644)
-	os.WriteFile(filepath.Join(dir, "app.min.js"), []byte("minified\n"), 0644)
+	os.WriteFile(filepath.Join(dir, "app.js.map"), []byte("sourcemap\n"), 0644)
 
 	cfg := DefaultConfig()
 	repo, err := LoadRepository(dir, cfg)
@@ -172,8 +171,8 @@ func TestLoadRepositoryExcludeFiles(t *testing.T) {
 	}
 
 	for _, fi := range repo.Files {
-		if fi.RelativePath == "app.min.js" {
-			t.Error("min.js file should be excluded by default config")
+		if fi.RelativePath == "app.js.map" {
+			t.Error(".map file should be excluded by default config")
 		}
 	}
 }
@@ -274,9 +273,15 @@ func TestLoadRepositoryDotDir(t *testing.T) {
 		t.Fatal(err)
 	}
 
+	// Dot-prefixed dirs are now loaded (matching Python behavior)
+	// Only .git (in ExcludeDirs) should be excluded
+	foundHidden := false
 	for _, fi := range repo.Files {
 		if fi.RelativePath == ".hidden/secret.go" || fi.RelativePath == filepath.Join(".hidden", "secret.go") {
-			t.Error("dot-prefixed directories should be excluded")
+			foundHidden = true
 		}
+	}
+	if !foundHidden {
+		t.Error(".hidden/secret.go should be loaded (dot dirs are no longer blanket-excluded)")
 	}
 }

@@ -29,10 +29,26 @@ func parsePython(root *sitter.Node, code []byte, result *types.FileParseResult) 
 			result.Imports = append(result.Imports, extractPythonFromImport(child, code))
 		case "class_definition":
 			result.Classes = append(result.Classes, extractPythonClass(child, code))
-		case "function_definition", "decorated_definition":
+		case "function_definition":
 			fn := extractPythonFunction(child, code, "")
 			if fn.Name != "" {
 				result.Functions = append(result.Functions, fn)
+			}
+		case "decorated_definition":
+			// A decorated_definition can wrap either a function or a class
+			for j := 0; j < int(child.ChildCount()); j++ {
+				inner := child.Child(j)
+				if inner.Type() == "class_definition" {
+					cls := extractPythonClass(child, code)
+					result.Classes = append(result.Classes, cls)
+					break
+				} else if inner.Type() == "function_definition" {
+					fn := extractPythonFunction(child, code, "")
+					if fn.Name != "" {
+						result.Functions = append(result.Functions, fn)
+					}
+					break
+				}
 			}
 		}
 	}
@@ -95,8 +111,22 @@ func extractPythonClass(node *sitter.Node, code []byte) types.ClassInfo {
 		EndLine:   int(node.EndPoint().Row) + 1,
 		Kind:      "class",
 	}
-	for i := 0; i < int(node.ChildCount()); i++ {
-		child := node.Child(i)
+
+	// Handle decorated definitions wrapping a class
+	actual := node
+	if node.Type() == "decorated_definition" {
+		for i := 0; i < int(node.ChildCount()); i++ {
+			child := node.Child(i)
+			if child.Type() == "decorator" {
+				ci.Decorators = append(ci.Decorators, child.Content(code))
+			} else if child.Type() == "class_definition" {
+				actual = child
+			}
+		}
+	}
+
+	for i := 0; i < int(actual.ChildCount()); i++ {
+		child := actual.Child(i)
 		switch child.Type() {
 		case "identifier":
 			ci.Name = child.Content(code)

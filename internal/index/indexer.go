@@ -58,9 +58,15 @@ func (idx *Indexer) indexFile(fi loader.FileInfo, content string, pr *types.File
 	// Class-level elements
 	for _, cls := range pr.Classes {
 		idx.addClassElement(fi, content, pr, cls)
+		// Emit each class method as a separate function element
+		// (Python/JS/TS store methods in cls.Methods, not in pr.Functions)
+		for _, method := range cls.Methods {
+			idx.addFunctionElement(fi, content, pr, method)
+		}
 	}
 
-	// Function-level elements
+	// Function-level elements (includes class methods — JS/TS parser puts them in
+	// pr.Functions, matching Python's behavior where methods are in both lists)
 	for _, fn := range pr.Functions {
 		idx.addFunctionElement(fi, content, pr, fn)
 	}
@@ -155,6 +161,7 @@ func (idx *Indexer) addFunctionElement(fi loader.FileInfo, content string, pr *t
 			"is_async":   fn.IsAsync,
 			"receiver":   fn.Receiver,
 			"complexity": fn.Complexity,
+			"calls":      fn.Calls,
 		},
 	}
 	idx.Elements = append(idx.Elements, elem)

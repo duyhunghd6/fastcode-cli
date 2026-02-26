@@ -29,15 +29,17 @@ type Config struct {
 // DefaultConfig returns the default loader configuration.
 func DefaultConfig() Config {
 	return Config{
-		MaxFileSize: 1024 * 1024, // 1MB
+		MaxFileSize: 5 * 1024 * 1024, // 5MB (matches Python)
 		ExcludeDirs: []string{
 			".git", ".svn", ".hg", "node_modules", "__pycache__",
-			".venv", "venv", ".env", "vendor", "dist", "build",
-			".idea", ".vscode", ".DS_Store", "target",
+			".venv", "venv", "dist", "build",
+			".idea", ".vscode", "target",
 		},
 		ExcludeFiles: []string{
-			"*.min.js", "*.min.css", "*.map", "*.lock",
-			"package-lock.json", "yarn.lock", "go.sum",
+			"*.map", "*.lock",
+			"*.bundle.js", "*.pyc",
+			"yarn.lock", "go.sum",
+			".DS_Store", ".env",
 		},
 	}
 }
@@ -77,6 +79,15 @@ func LoadRepository(rootPath string, cfg Config) (*Repository, error) {
 		excludeDirSet[d] = true
 	}
 
+	// Separate negation patterns from normal patterns
+	hasNegation := false
+	for _, pat := range gitignorePatterns {
+		if strings.HasPrefix(pat, "!") {
+			hasNegation = true
+			break
+		}
+	}
+
 	err = filepath.WalkDir(absRoot, func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
 			return nil // skip inaccessible paths
@@ -87,13 +98,17 @@ func LoadRepository(rootPath string, cfg Config) (*Repository, error) {
 		// Skip excluded directories
 		if d.IsDir() {
 			dirName := d.Name()
-			if excludeDirSet[dirName] || strings.HasPrefix(dirName, ".") {
+			if excludeDirSet[dirName] {
 				return filepath.SkipDir
 			}
-			// Check gitignore
-			for _, pat := range gitignorePatterns {
-				if matchGitignore(pat, relPath+"/") {
-					return filepath.SkipDir
+			// Check gitignore for directories — only SkipDir if there are
+			// NO negation patterns (negation patterns require entering the
+			// directory to check individual files)
+			if !hasNegation {
+				for _, pat := range gitignorePatterns {
+					if matchGitignore(pat, relPath+"/") {
+						return filepath.SkipDir
+					}
 				}
 			}
 			return nil
@@ -121,11 +136,9 @@ func LoadRepository(rootPath string, cfg Config) (*Repository, error) {
 			}
 		}
 
-		// Check gitignore
-		for _, pat := range gitignorePatterns {
-			if matchGitignore(pat, relPath) {
-				return nil
-			}
+		// Check gitignore (with negation support)
+		if isGitignored(gitignorePatterns, relPath) {
+			return nil
 		}
 
 		repo.Files = append(repo.Files, FileInfo{
@@ -172,20 +185,79 @@ func loadGitignore(rootPath string) []string {
 	return patterns
 }
 
-// matchGitignore performs a simplified gitignore pattern match.
+// isGitignored checks if a path is ignored by the gitignore patterns,
+// properly handling negation patterns (lines starting with !).
+// Patterns are evaluated in order; the last matching pattern wins.
+func isGitignored(patterns []string, path string) bool {
+	ignored := false
+	for _, pat := range patterns {
+		if strings.HasPrefix(pat, "!") {
+			// Negation pattern: if it matches, UN-ignore the file
+			negPat := strings.TrimPrefix(pat, "!")
+			if matchGitignorePattern(negPat, path) {
+				ignored = false
+			}
+		} else {
+			if matchGitignorePattern(pat, path) {
+				ignored = true
+			}
+		}
+	}
+	return ignored
+}
+
+// matchGitignore performs gitignore-compatible pattern matching (single pattern).
+// Supports: simple globs, directory patterns (trailing /), path prefixes,
+// wildcard subdirectory patterns (dir/*), and negation (!).
 func matchGitignore(pattern, path string) bool {
-	// Handle negation
+	// Handle negation — treat as non-match for backward compatibility
 	if strings.HasPrefix(pattern, "!") {
 		return false
 	}
-	// Handle directory-only patterns
-	pattern = strings.TrimSuffix(pattern, "/")
-	// Simple glob match
-	matched, _ := filepath.Match(pattern, filepath.Base(path))
+	return matchGitignorePattern(pattern, path)
+}
+
+// matchGitignorePattern performs the actual gitignore pattern matching.
+func matchGitignorePattern(pattern, path string) bool {
+	// Determine if this is a directory-only pattern
+	dirOnly := strings.HasSuffix(pattern, "/")
+	isDir := strings.HasSuffix(path, "/")
+	cleanPattern := strings.TrimSuffix(pattern, "/")
+	cleanPath := strings.TrimSuffix(path, "/")
+
+	// Directory-only patterns should only match directories
+	if dirOnly && !isDir {
+		// But also match files INSIDE the directory
+		if !strings.HasPrefix(cleanPath, cleanPattern+"/") && cleanPath != cleanPattern {
+			return false
+		}
+	}
+
+	// 1. Try matching against basename (e.g., "*.log" matches "debug.log")
+	baseName := filepath.Base(cleanPath)
+	matched, _ := filepath.Match(cleanPattern, baseName)
 	if matched {
 		return true
 	}
-	// Try matching against the full relative path
-	matched, _ = filepath.Match(pattern, path)
-	return matched
+
+	// 2. Try matching against full relative path (e.g., "dist/*" matches "dist/main.js")
+	matched, _ = filepath.Match(cleanPattern, cleanPath)
+	if matched {
+		return true
+	}
+
+	// 3. Handle directory prefix patterns (e.g., "coverage/lcov-report/data/")
+	//    These match any path that starts with the pattern prefix.
+	if strings.Contains(cleanPattern, "/") {
+		// Exact directory match
+		if cleanPath == cleanPattern {
+			return true
+		}
+		// Path is inside the pattern directory
+		if strings.HasPrefix(cleanPath, cleanPattern+"/") {
+			return true
+		}
+	}
+
+	return false
 }
