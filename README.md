@@ -8,6 +8,7 @@ Inspired by [HKUDS/FastCode](https://github.com/HKUDS/FastCode) — Rewritten in
 
 [![Go 1.23+](https://img.shields.io/badge/go-1.23+-00ADD8.svg?logo=go&logoColor=white)](https://go.dev/)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+[![Tiếng Việt](https://img.shields.io/badge/🇻🇳_Tiếng_Việt-README--vi.md-red)](README-vi.md)
 
 **[Features](#-features)** • **[Quick Start](#-quick-start)** • **[Architecture](#-architecture)** • **[Roadmap](#-roadmap)** • **[Credits](#-credits)**
 
