@@ -140,11 +140,7 @@ func (hr *HybridRetriever) Search(query string, queryVec []float32, topK int) []
 	scores := make(map[string]float64)
 
 	// BM25 keyword search
-	bm25Limit := 10
-	if topK*2 > 10 {
-		bm25Limit = topK * 2
-	}
-	bm25Results := hr.bm25.Search(query, bm25Limit)
+	bm25Results := hr.bm25.Search(query, 50)
 	maxBM25 := 0.0
 	for _, r := range bm25Results {
 		if r.Score > maxBM25 {
@@ -216,6 +212,7 @@ func (hr *HybridRetriever) Search(query string, queryVec []float32, topK int) []
 			Score:   sorted_[i].score,
 			Source:  source,
 		}
+		fmt.Printf("DEBUG HYBRID TOP %d: ID=%s Type=%s Score=%f\n", i, elem.ID, elem.Type, sorted_[i].score)
 	}
 	return results
 }

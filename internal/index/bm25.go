@@ -6,20 +6,24 @@ import (
 	"strings"
 )
 
-// BM25 implements the Okapi BM25 ranking algorithm for keyword search.
+// BM25 implements the Okapi BM25 ranking algorithm, matching python's rank_bm25 exactly.
 type BM25 struct {
-	k1        float64
-	b         float64
-	docs      []bm25Doc
-	df        map[string]int // document frequency per term
-	avgDL     float64
-	totalDocs int
+	k1         float64
+	b          float64
+	epsilon    float64
+	docs       []bm25Doc
+	df         map[string]int // document frequency per term
+	idf        map[string]float64
+	avgDL      float64
+	averageIdf float64
+	totalDocs  int
 }
 
 type bm25Doc struct {
 	ID     string
 	Tokens []string
 	Length int
+	TF     map[string]float64
 }
 
 // NewBM25 creates a new BM25 index with standard parameters.
@@ -31,81 +35,108 @@ func NewBM25(k1, b float64) *BM25 {
 		b = 0.75
 	}
 	return &BM25{
-		k1: k1,
-		b:  b,
-		df: make(map[string]int),
+		k1:      k1,
+		b:       b,
+		epsilon: 0.25, // Python's BM25Okapi default epsilon
+		df:      make(map[string]int),
+		idf:     make(map[string]float64),
 	}
 }
 
 // AddDocument adds a document to the BM25 index.
 func (bm *BM25) AddDocument(id, text string) {
 	tokens := tokenize(text)
+	tf := make(map[string]float64)
+	for _, t := range tokens {
+		tf[t]++
+	}
+
 	doc := bm25Doc{
 		ID:     id,
 		Tokens: tokens,
 		Length: len(tokens),
+		TF:     tf,
 	}
 	bm.docs = append(bm.docs, doc)
 
-	// Update document frequency
+	// Update DF
 	seen := make(map[string]bool)
-	for _, tok := range tokens {
-		if !seen[tok] {
-			bm.df[tok]++
-			seen[tok] = true
+	for _, t := range tokens {
+		if !seen[t] {
+			seen[t] = true
+			bm.df[t]++
 		}
 	}
 
-	// Recalculate average document length
-	bm.totalDocs = len(bm.docs)
+	bm.totalDocs++
+	// Recalculate avgDL
 	totalLen := 0
 	for _, d := range bm.docs {
 		totalLen += d.Length
 	}
 	bm.avgDL = float64(totalLen) / float64(bm.totalDocs)
+
+	bm.calcIDF()
 }
 
-// BM25Result holds a search result.
+// calcIDF recalculates the IDF for all terms in df exactly like python's rank_bm25
+func (bm *BM25) calcIDF() {
+	var idfSum float64
+	var negativeIdfs []string
+
+	for word, freq := range bm.df {
+		// Python: math.log(self.corpus_size - freq + 0.5) - math.log(freq + 0.5)
+		idf := math.Log(float64(bm.totalDocs)-float64(freq)+0.5) - math.Log(float64(freq)+0.5)
+		bm.idf[word] = idf
+		idfSum += idf
+		if idf < 0 {
+			negativeIdfs = append(negativeIdfs, word)
+		}
+	}
+
+	if len(bm.idf) > 0 {
+		bm.averageIdf = idfSum / float64(len(bm.idf))
+	} else {
+		bm.averageIdf = 0
+	}
+
+	eps := bm.epsilon * bm.averageIdf
+	for _, word := range negativeIdfs {
+		bm.idf[word] = eps
+	}
+}
+
+// BM25Result holds a scored document ID.
 type BM25Result struct {
 	ID    string
 	Score float64
 }
 
-// Search returns the top-k documents matching the query, ranked by BM25 score.
+type scored struct {
+	idx   int
+	score float64
+}
+
+// Search returns the top-k documents for a query text.
 func (bm *BM25) Search(query string, topK int) []BM25Result {
 	queryTokens := tokenize(query)
 	if len(queryTokens) == 0 || bm.totalDocs == 0 {
 		return nil
 	}
 
-	type scored struct {
-		idx   int
-		score float64
-	}
-
 	var results []scored
-
 	for i, doc := range bm.docs {
-		score := 0.0
-		// Build term frequency map for this document
-		tf := make(map[string]int)
-		for _, tok := range doc.Tokens {
-			tf[tok]++
-		}
+		var score float64
 
-		for _, qt := range queryTokens {
-			docFreq, exists := bm.df[qt]
-			if !exists {
+		for _, token := range queryTokens {
+			termFreq := doc.TF[token]
+			if termFreq == 0 {
 				continue
 			}
-			termFreq := float64(tf[qt])
 
-			// IDF component — BM25+ variant: always positive even for common terms
-			idf := math.Log(1 + (float64(bm.totalDocs)-float64(docFreq)+0.5)/(float64(docFreq)+0.5))
-
-			// TF component with length normalization
-			tfNorm := (termFreq * (bm.k1 + 1)) /
-				(termFreq + bm.k1*(1-bm.b+bm.b*float64(doc.Length)/bm.avgDL))
+			idf := bm.idf[token]
+			// Python's TF normalization implementation
+			tfNorm := (termFreq * (bm.k1 + 1)) / (termFreq + bm.k1*(1-bm.b+bm.b*float64(doc.Length)/bm.avgDL))
 
 			score += idf * tfNorm
 		}
@@ -115,8 +146,12 @@ func (bm *BM25) Search(query string, topK int) []BM25Result {
 		}
 	}
 
-	// Sort by score descending
-	sort.Slice(results, func(i, j int) bool {
+	// Sort by score descending. For ties, Python rank_bm25 preserves original order (mostly).
+	// To exactly mirror python, we use a stable sort and tie-break on index.
+	sort.SliceStable(results, func(i, j int) bool {
+		if results[i].score == results[j].score {
+			return results[i].idx < results[j].idx
+		}
 		return results[i].score > results[j].score
 	})
 

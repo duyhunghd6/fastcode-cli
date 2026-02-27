@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"sort"
 	"strings"
 
 	"github.com/duyhunghd6/fastcode-cli/internal/llm"
@@ -140,7 +141,7 @@ func (ia *IterativeAgent) Retrieve(query string, pq *ProcessedQuery) (*Retrieval
 	}
 
 	// Deduplicate elements
-	elements := deduplicateElements(ia.gatheredElements)
+	elements := ia.removeDuplicatesWithContainment(ia.gatheredElements)
 
 	return &RetrievalResult{
 		Elements:   elements,
@@ -271,16 +272,107 @@ func extractJSON(s string) string {
 	return ""
 }
 
-func deduplicateElements(elements []types.CodeElement) []types.CodeElement {
+// deduplicateElements was replaced by removeDuplicatesWithContainment to match Python's logic.
+func (ia *IterativeAgent) removeDuplicatesWithContainment(elements []types.CodeElement) []types.CodeElement {
+	// First remove exact ID duplicates
 	seen := make(map[string]bool)
-	var result []types.CodeElement
+	var unique []types.CodeElement
 	for _, elem := range elements {
 		if !seen[elem.ID] {
 			seen[elem.ID] = true
-			result = append(result, elem)
+			unique = append(unique, elem)
 		}
 	}
-	return result
+
+	if len(unique) <= 1 {
+		return unique
+	}
+
+	// Group by repo + file path
+	type groupKey struct {
+		repo string
+		path string
+	}
+	groups := make(map[groupKey][]types.CodeElement)
+	for _, elem := range unique {
+		key := groupKey{repo: elem.RepoName, path: elem.RelativePath}
+		groups[key] = append(groups[key], elem)
+	}
+
+	var final []types.CodeElement
+
+	for _, group := range groups {
+		if len(group) == 1 {
+			final = append(final, group[0])
+			continue
+		}
+
+		// Sort by priority (file > class > function, then line range size, then start line)
+		sort.Slice(group, func(i, j int) bool {
+			e1 := group[i]
+			e2 := group[j]
+
+			p1 := getTypePriority(e1.Type)
+			p2 := getTypePriority(e2.Type)
+			if p1 != p2 {
+				return p1 > p2 // Higher priority first
+			}
+
+			s1 := e1.EndLine - e1.StartLine
+			s2 := e2.EndLine - e2.StartLine
+			if s1 != s2 {
+				return s1 > s2 // Larger range first
+			}
+
+			return e1.StartLine < e2.StartLine
+		})
+
+		var kept []types.CodeElement
+		for _, elem := range group {
+			contained := false
+			for _, k := range kept {
+				// check if k contains elem
+				// Python: kept_start <= start and end <= kept_end and (kept_start < start or end < kept_end)
+				if k.StartLine <= elem.StartLine && elem.EndLine <= k.EndLine &&
+					(k.StartLine < elem.StartLine || elem.EndLine < k.EndLine) {
+					contained = true
+					break
+				}
+			}
+			if !contained {
+				kept = append(kept, elem)
+			}
+		}
+		final = append(final, kept...)
+	}
+
+	// Python's IterativeAgent seems to preserve original ordering (mostly), but we grouped them.
+	// To preserve original order, we filter the original 'unique' list against 'final' IDs:
+	finalSeen := make(map[string]bool)
+	for _, f := range final {
+		finalSeen[f.ID] = true
+	}
+
+	var orderedFinal []types.CodeElement
+	for _, u := range unique {
+		if finalSeen[u.ID] {
+			orderedFinal = append(orderedFinal, u)
+		}
+	}
+
+	return orderedFinal
+}
+
+func getTypePriority(t string) int {
+	switch t {
+	case "file":
+		return 3
+	case "class":
+		return 2
+	case "function":
+		return 1
+	}
+	return 0
 }
 
 func min(a, b int) int {

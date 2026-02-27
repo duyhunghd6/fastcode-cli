@@ -46,7 +46,14 @@ else
 fi
 echo ""
 
-# --- Step 3: Query with Python (Intercept) ---
+# --- Step 3: Index with Python ---
+echo "🟡 [Python] Indexing with FASTCODE_NO_EMBEDDINGS=1..."
+export FASTCODE_NO_EMBEDDINGS=1
+(cd "$PY_CLI" && source .venv/bin/activate && python main.py index --repo-path "$REPO" --reindex >/dev/null 2>&1 || true)
+echo "   Python Index completed"
+echo ""
+
+# --- Step 4: Query with Python (Intercept) ---
 echo "🟡 [Python] Generating prompt..."
 export FASTCODE_NO_EMBEDDINGS=1
 export FASTCODE_LOG_LEVEL=DEBUG

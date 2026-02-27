@@ -106,6 +106,7 @@ func (idx *Indexer) addFileElement(fi loader.FileInfo, content string, pr *types
 		StartLine:    1,
 		EndLine:      pr.TotalLines,
 		Code:         truncate(content, 4000),
+		Docstring:    pr.ModuleDocstring,
 		Summary:      summary,
 		RepoName:     idx.repoName,
 		Metadata: map[string]any{
