@@ -4,9 +4,11 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"path/filepath"
 	"sort"
 	"strings"
 
+	"github.com/duyhunghd6/fastcode-cli/internal/graph"
 	"github.com/duyhunghd6/fastcode-cli/internal/llm"
 	"github.com/duyhunghd6/fastcode-cli/internal/types"
 )
@@ -15,6 +17,7 @@ import (
 type IterativeAgent struct {
 	client       *llm.Client
 	toolExecutor *ToolExecutor
+	graphs       *graph.CodeGraphs
 	config       AgentConfig
 
 	// State tracked across rounds
@@ -117,13 +120,14 @@ type RetrievalResult struct {
 }
 
 // NewIterativeAgent creates a new iterative retrieval agent.
-func NewIterativeAgent(client *llm.Client, toolExec *ToolExecutor, cfg AgentConfig) *IterativeAgent {
+func NewIterativeAgent(client *llm.Client, toolExec *ToolExecutor, graphs *graph.CodeGraphs, cfg AgentConfig) *IterativeAgent {
 	if cfg.MaxRounds == 0 {
 		cfg = DefaultAgentConfig()
 	}
 	return &IterativeAgent{
 		client:       client,
 		toolExecutor: toolExec,
+		graphs:       graphs,
 		config:       cfg,
 	}
 }
@@ -154,9 +158,20 @@ func (ia *IterativeAgent) Retrieve(query string, pq *ProcessedQuery) (*Retrieval
 	}
 	ia.initializeAdaptiveParams(queryComplexity)
 
-	// Execute round 1 tool calls using REAL filesystem search (matching Python)
-	// Python's flow: tool calls → file candidates → LLM selects relevant files → indexed elements
-	var allCandidates []FileCandidate
+	// ─── Execute Round 1 ───
+	log.Printf("[agent] Executing Round 1 search")
+
+	// Step 1: Standard retrieval (BM25)
+	var standardElements []types.CodeElement
+	if res, toolErr := ia.toolExecutor.searchCode(query); toolErr == nil && res != nil {
+		standardElements = append(standardElements, res.Elements...)
+		log.Printf("[agent] Standard retrieval found %d elements", len(standardElements))
+	} else if toolErr != nil {
+		log.Printf("[agent] Standard retrieval error: %v", toolErr)
+	}
+
+	// Step 2: Tool calls execution (Regex / Filesystem)
+	var toolElements []types.CodeElement
 	if len(round1Result.ToolCalls) > 0 {
 		for _, tc := range round1Result.ToolCalls {
 			toolName := tc.GetToolName()
@@ -174,64 +189,52 @@ func (ia *IterativeAgent) Retrieve(query string, pq *ProcessedQuery) (*Retrieval
 				useRegex, _ := params["use_regex"].(bool)
 
 				candidates := ia.toolExecutor.ExecuteSearchCodebase(searchTerm, filePattern, useRegex)
-				log.Printf("[agent] search_codebase(%q) returned %d candidates", searchTerm, len(candidates))
-				allCandidates = append(allCandidates, candidates...)
+				log.Printf("[agent] search_codebase(%q) returned %d files", searchTerm, len(candidates))
 
+				// Map directly to elements instead of using LLM file selection
+				for _, c := range candidates {
+					elements := ia.toolExecutor.FindElementsForFile(c.FilePath)
+					toolElements = append(toolElements, elements...)
+				}
 			} else if toolName == "list_directory" || toolName == "list_files" {
 				dirPath, _ := params["path"].(string)
 				if dirPath == "" {
 					dirPath = tc.GetArg()
 				}
 				candidates := ia.toolExecutor.ExecuteListDirectory(dirPath)
-				log.Printf("[agent] list_directory(%q) returned %d candidates", dirPath, len(candidates))
-				allCandidates = append(allCandidates, candidates...)
-			}
-		}
-	}
+				log.Printf("[agent] list_directory(%q) returned %d files", dirPath, len(candidates))
 
-	// If we have file candidates, use LLM to select the most relevant ones
-	if len(allCandidates) > 0 {
-		// Deduplicate candidates by file path
-		seen := make(map[string]bool)
-		var uniqueCandidates []FileCandidate
-		for _, c := range allCandidates {
-			if !seen[c.FilePath] {
-				seen[c.FilePath] = true
-				uniqueCandidates = append(uniqueCandidates, c)
-			}
-		}
-		log.Printf("[agent] %d unique file candidates for LLM selection", len(uniqueCandidates))
+				// Map directly to elements
+				for _, c := range candidates {
+					// Replicate Python's single-repo "detected_repo_name" bug/logic:
+					// Python only includes files if they have a slash (e.g. repo_name/file_name).
+					// If no slash, it drops it.
+					if !strings.Contains(filepath.ToSlash(c.FilePath), "/") {
+						continue
+					}
 
-		// Step 2: Use LLM to select the most relevant initial files
-		selectedFiles := ia.llmSelectFiles(pq.Original, uniqueCandidates)
-		if len(selectedFiles) == 0 {
-			log.Printf("[agent] LLM file selection returned 0 files, falling back to top 10 candidates")
-			for i, c := range uniqueCandidates {
-				if i >= 10 {
-					break
+					// Find elements (skips directories naturally as they aren't in elements)
+					elements := ia.toolExecutor.FindElementsForFile(c.FilePath)
+					toolElements = append(toolElements, elements...)
 				}
-				selectedFiles = append(selectedFiles, c.FilePath)
-			}
-		} else {
-			log.Printf("[agent] LLM selected %d files for initial context", len(selectedFiles))
-		}
-
-		// Convert selected files to indexed elements
-		for _, filePath := range selectedFiles {
-			elements := ia.toolExecutor.FindElementsForFile(filePath)
-			if len(elements) > 0 {
-				ia.gatheredElements = append(ia.gatheredElements, elements...)
 			}
 		}
 	}
 
-	// Also perform standard BM25 search (baseline, like Python's _perform_standard_retrieval)
-	if res, err := ia.toolExecutor.searchCode(query); err == nil && res != nil {
-		ia.gatheredElements = append(ia.gatheredElements, res.Elements...)
-	}
+	// Step 3: Merge and deduplicate
+	log.Printf("[agent] Merging %d standard and %d tool elements", len(standardElements), len(toolElements))
+	var mergedElements []types.CodeElement
+	mergedElements = append(mergedElements, standardElements...)
+	mergedElements = append(mergedElements, toolElements...)
 
-	// Deduplicate after round 1
-	ia.gatheredElements = ia.removeDuplicatesWithContainment(ia.gatheredElements)
+	log.Printf("[agent] Calling removeDuplicatesWithContainment")
+	mergedElements = ia.removeDuplicatesWithContainment(mergedElements)
+	log.Printf("[agent] After deduplication: %d elements remain", len(mergedElements))
+
+	// Step 4: Graph expansion (replaces LLM Semantic Bridge)
+	log.Printf("[agent] Calling expandWithGraph")
+	ia.gatheredElements = ia.expandWithGraph(mergedElements, 2)
+	log.Printf("[agent] expandWithGraph returned %d elements", len(ia.gatheredElements))
 
 	// Record round 1 history
 	totalLines := ia.calculateTotalLines(ia.gatheredElements)
@@ -516,14 +519,17 @@ func (ia *IterativeAgent) parseRound1Response(response string) (*RoundResult, er
 func (ia *IterativeAgent) executeRoundN(query string, pq *ProcessedQuery, round int) (*RoundResult, error) {
 	prompt := ia.buildRoundNPrompt(query, pq, round)
 
+	log.Printf("[agent] Making ChatCompletion call for Round %d", round)
 	response, err := ia.client.ChatCompletion([]llm.ChatMessage{
 		{Role: "system", Content: "You are a precise code analysis agent. Respond in specified format only."},
 		{Role: "user", Content: prompt},
 	}, ia.config.Temperature, ia.config.MaxTokensAgent)
 	if err != nil {
+		log.Printf("[agent] ChatCompletion error: %v", err)
 		return nil, fmt.Errorf("LLM call round %d: %w", round, err)
 	}
 
+	log.Printf("[agent] Done ChatCompletion. Parsing response.")
 	return ia.parseRoundNResponse(response, round)
 }
 
@@ -857,6 +863,7 @@ func extractJSON(s string) string {
 
 // deduplicateElements was replaced by removeDuplicatesWithContainment to match Python's logic.
 func (ia *IterativeAgent) removeDuplicatesWithContainment(elements []types.CodeElement) []types.CodeElement {
+	log.Printf("[agent] removeDuplicatesWithContainment starting with %d elements", len(elements))
 	// First remove exact ID duplicates
 	seen := make(map[string]bool)
 	var unique []types.CodeElement
@@ -958,149 +965,45 @@ func getTypePriority(t string) int {
 	return 0
 }
 
-// ─── LLM File Selection (matching Python's _llm_select_elements_with_granularity) ───
+// ─── Graph Expansion (matching Python's CodeGraphs inclusion) ───
 
-// llmSelectFiles sends file candidates to the LLM and asks it to pick the most relevant files.
-// This mirrors Python's _llm_select_elements_with_granularity() in iterative_agent.py.
-func (ia *IterativeAgent) llmSelectFiles(query string, candidates []FileCandidate) []string {
-	if len(candidates) == 0 {
-		return nil
+func (ia *IterativeAgent) expandWithGraph(elements []types.CodeElement, maxHops int) []types.CodeElement {
+	log.Printf("[agent] expandWithGraph starting with %d elements", len(elements))
+	if ia.graphs == nil || len(elements) == 0 {
+		return elements
 	}
 
-	// Limit candidates to avoid huge prompts
-	maxCandidates := 50
-	if len(candidates) > maxCandidates {
-		candidates = candidates[:maxCandidates]
+	expanded := make(map[string]types.CodeElement)
+	for _, elem := range elements {
+		expanded[elem.ID] = elem
 	}
 
-	prompt := ia.buildFileSelectionPrompt(query, candidates)
-
-	messages := []llm.ChatMessage{
-		{Role: "user", Content: prompt},
+	limit := 10
+	if len(elements) < 10 {
+		limit = len(elements)
 	}
 
-	response, err := ia.client.ChatCompletion(messages, 0.2, 4000)
-	if err != nil {
-		log.Printf("[agent] LLM file selection error: %v", err)
-		// Fallback: return top 10 files by match count
-		return ia.fallbackFileSelection(candidates)
-	}
-
-	selectedFiles := ia.parseFileSelectionResponse(response)
-	if len(selectedFiles) == 0 {
-		// Fallback if LLM didn't return valid selections
-		return ia.fallbackFileSelection(candidates)
-	}
-
-	return selectedFiles
-}
-
-// buildFileSelectionPrompt builds the prompt for LLM file selection.
-// Mirrors Python's _build_element_selection_prompt.
-func (ia *IterativeAgent) buildFileSelectionPrompt(query string, candidates []FileCandidate) string {
-	var sb strings.Builder
-	sb.WriteString("You are a code navigation assistant. Select only files from this repository that best address the query.\n")
-	sb.WriteString(fmt.Sprintf("User Query: %q\n\n", query))
-	sb.WriteString("**File Candidates**:\n")
-
-	for i, c := range candidates {
-		sb.WriteString(fmt.Sprintf("\n%d. %s", i+1, c.FilePath))
-		if c.RepoName != "" {
-			sb.WriteString(fmt.Sprintf("\n   Repo: %s", c.RepoName))
-		}
-		if c.MatchCount > 0 {
-			sb.WriteString(fmt.Sprintf("\n   Matches: %d", c.MatchCount))
-		}
-	}
-
-	sb.WriteString(`
-
-**Your Task**: Select the MOST RELEVANT files to answer the query. Focus on actual source code files, NOT:
-- Coverage reports or HTML files
-- Configuration files (unless the query is about configuration)
-- Test files (unless the query is about testing)
-- Documentation/markdown files (unless the query is about docs)
-
-**Response Format** (JSON only):
-{
-  "selected_elements": [
-    {"file_path": "path/to/file.ts", "type": "file", "repo_name": "repo"}
-  ]
-}
-
-**CRITICAL**:
-- Respond with valid JSON only
-- No markdown blocks, no comments
-- Select 5-15 files maximum
-- Prefer source files over generated files`)
-
-	return sb.String()
-}
-
-// parseFileSelectionResponse parses the LLM response for file selections.
-func (ia *IterativeAgent) parseFileSelectionResponse(response string) []string {
-	jsonStr := extractJSON(response)
-	if jsonStr == "" {
-		return nil
-	}
-
-	var parsed map[string]any
-	if err := json.Unmarshal([]byte(jsonStr), &parsed); err != nil {
-		log.Printf("[agent] failed to parse file selection response: %v", err)
-		return nil
-	}
-
-	selectedRaw, ok := parsed["selected_elements"]
-	if !ok {
-		return nil
-	}
-
-	elements, ok := selectedRaw.([]any)
-	if !ok {
-		return nil
-	}
-
-	var files []string
-	for _, e := range elements {
-		elemMap, ok := e.(map[string]any)
-		if !ok {
-			continue
-		}
-		filePath, ok := elemMap["file_path"].(string)
-		if !ok || filePath == "" {
-			continue
-		}
-		files = append(files, filePath)
-	}
-
-	return files
-}
-
-// fallbackFileSelection returns the top files sorted by match count when LLM selection fails.
-func (ia *IterativeAgent) fallbackFileSelection(candidates []FileCandidate) []string {
-	// Sort by match count descending (simple selection sort for small lists)
-	sorted := make([]FileCandidate, len(candidates))
-	copy(sorted, candidates)
-	for i := 0; i < len(sorted)-1; i++ {
-		maxIdx := i
-		for j := i + 1; j < len(sorted); j++ {
-			if sorted[j].MatchCount > sorted[maxIdx].MatchCount {
-				maxIdx = j
+	log.Printf("[agent] expandWithGraph loop. limit=%d", limit)
+	for i := 0; i < limit; i++ {
+		elem := elements[i]
+		relatedIDs := ia.graphs.GetRelatedElements(elem.ID, maxHops)
+		log.Printf("[agent] element %d (ID %s) has %d related elements", i, elem.ID, len(relatedIDs))
+		for _, relatedID := range relatedIDs {
+			if _, exists := expanded[relatedID]; !exists {
+				if relatedElem, ok := ia.toolExecutor.GetElement(relatedID); ok {
+					expanded[relatedID] = *relatedElem
+				}
 			}
 		}
-		sorted[i], sorted[maxIdx] = sorted[maxIdx], sorted[i]
 	}
 
-	maxFiles := 10
-	if len(sorted) < maxFiles {
-		maxFiles = len(sorted)
+	var result []types.CodeElement
+	for _, elem := range expanded {
+		result = append(result, elem)
 	}
 
-	files := make([]string, maxFiles)
-	for i := 0; i < maxFiles; i++ {
-		files[i] = sorted[i].FilePath
-	}
-	return files
+	log.Printf("[agent] expandWithGraph returning %d expanded elements", len(result))
+	return result
 }
 
 func max(a, b int) int {

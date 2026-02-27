@@ -73,6 +73,15 @@ func (te *ToolExecutor) SetRepoRoot(repoRoot, repoName string) {
 	te.repoName = repoName
 }
 
+// GetElement retrieves a specific CodeElement by ID.
+func (te *ToolExecutor) GetElement(id string) (*types.CodeElement, bool) {
+	if te.elements == nil {
+		return nil, false
+	}
+	elem, exists := te.elements[id]
+	return elem, exists
+}
+
 // Execute runs a tool by name with the given argument.
 func (te *ToolExecutor) Execute(toolName, arg string) (*ToolResult, error) {
 	switch toolName {
@@ -134,6 +143,7 @@ func (te *ToolExecutor) ExecuteSearchCodebase(searchTerm, filePattern string, us
 	var candidates []FileCandidate
 	maxResults := 30
 
+	log.Printf("[tools] Starting WalkDir for term=%q", searchTerm)
 	_ = filepath.WalkDir(te.repoRoot, func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
 			return nil // skip errors
@@ -180,29 +190,39 @@ func (te *ToolExecutor) ExecuteSearchCodebase(searchTerm, filePattern string, us
 		if err != nil {
 			return nil
 		}
-		content := string(data)
 
-		// Count matches
-		matches := contentPattern.FindAllStringIndex(content, -1)
-		matchCount := len(matches)
-
-		// Also check filename/path match
-		filenameMatch := contentPattern.MatchString(d.Name()) || contentPattern.MatchString(relPath)
-
-		if matchCount > 0 || filenameMatch {
-			candidates = append(candidates, FileCandidate{
-				FilePath:   relPath,
-				MatchCount: matchCount,
-				RepoName:   te.repoName,
-			})
+		if contentPattern != nil {
+			if !contentPattern.Match(data) {
+				return nil
+			}
 		}
 
+		// Matched!
+		relPath, relErr := filepath.Rel(te.repoRoot, path)
+		if relErr != nil {
+			relPath = path
+		}
+
+		// Find count for struct compatibility
+		matchCount := 1
+		if contentPattern != nil {
+			matchCount = len(contentPattern.FindAllIndex(data, -1))
+		}
+
+		candidates = append(candidates, FileCandidate{
+			FilePath:   relPath,
+			MatchCount: matchCount,
+			RepoName:   te.repoName,
+		})
+
 		if len(candidates) >= maxResults {
+			log.Printf("[tools] max results reached for %q", searchTerm)
 			return filepath.SkipAll
 		}
 		return nil
 	})
 
+	log.Printf("[tools] Finished WalkDir for term=%q with %d candidates", searchTerm, len(candidates))
 	return candidates
 }
 
