@@ -102,7 +102,7 @@ func (te *ToolExecutor) Execute(toolName, arg string) (*ToolResult, error) {
 }
 
 // ExecuteSearchCodebase performs real filesystem content search like Python's agent_tools.py.
-// Returns FileCandidate list for LLM file selection. This is separate from the BM25 Execute path.
+// ExecuteSearchCodebase runs a ripgrep search and returns matched files.
 func (te *ToolExecutor) ExecuteSearchCodebase(searchTerm, filePattern string, useRegex bool) []FileCandidate {
 	if te.repoRoot == "" || searchTerm == "" {
 		return nil
@@ -227,7 +227,7 @@ func (te *ToolExecutor) ExecuteSearchCodebase(searchTerm, filePattern string, us
 }
 
 // ExecuteListDirectory performs real filesystem directory listing.
-// Returns FileCandidate list of files in the directory.
+// ExecuteListDirectory returns a list of files in the directory.
 func (te *ToolExecutor) ExecuteListDirectory(dirPath string) []FileCandidate {
 	if te.repoRoot == "" {
 		return nil
@@ -268,7 +268,7 @@ func (te *ToolExecutor) ExecuteListDirectory(dirPath string) []FileCandidate {
 }
 
 // FindElementsForFile retrieves all indexed elements for a given file path.
-// This is used after LLM file selection to get actual code elements.
+// GetElementsForFiles fetches actual code elements from the given file paths.
 func (te *ToolExecutor) FindElementsForFile(filePath string) []types.CodeElement {
 	var result []types.CodeElement
 	for _, elem := range te.elements {

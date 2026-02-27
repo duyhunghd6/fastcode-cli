@@ -191,7 +191,7 @@ func (ia *IterativeAgent) Retrieve(query string, pq *ProcessedQuery) (*Retrieval
 				candidates := ia.toolExecutor.ExecuteSearchCodebase(searchTerm, filePattern, useRegex)
 				log.Printf("[agent] search_codebase(%q) returned %d files", searchTerm, len(candidates))
 
-				// Map directly to elements instead of using LLM file selection
+				// Map directly to elements using the exact matched files
 				for _, c := range candidates {
 					elements := ia.toolExecutor.FindElementsForFile(c.FilePath)
 					toolElements = append(toolElements, elements...)
@@ -590,7 +590,7 @@ Base your confidence on:
 	// Cost-aware guidelines
 	sb.WriteString(fmt.Sprintf(`
 **Cost-Aware Decision Making**:
-1. **File Selection**:
+1. **Initial Hydration**:
    - Only remove irrelevant, redundant, or not useful files
    - Prefer class/function-level selections over entire files when possible, but select the entire file if multiple classes or functions within it are useful
 

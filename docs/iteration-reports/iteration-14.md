@@ -11,12 +11,13 @@ When executing the full E2E evaluation against the `<reference>/zvec` repository
 
 ### Full-Flow E2E Benchmark Matrix
 
-| Metric               | FastCode Go | FastCode Python | Status     |
-| -------------------- | ----------- | --------------- | ---------- |
-| **Total Requests**   | 3           | 3               | ✅ Matched |
-| **Total Responses**  | 3           | 3               | ✅ Matched |
-| **Final Confidence** | 92%         | 92%             | ✅ Matched |
-| **Bypass Filter**    | Removed     | N/A             | ✅ Clean   |
+| Target Repository | FastCode Go Calls | FastCode Python Calls | Status     | Bypass Filter |
+| ----------------- | ----------------- | --------------------- | ---------- | ------------- |
+| `zvec`            | 3                 | 3                     | ✅ Matched | Removed       |
+| `mcp_agent_mail`  | 3                 | 3                     | ✅ Matched | Removed       |
+| `music-theory`    | 3                 | 3                     | ✅ Matched | Removed       |
+| `beads`           | 3                 | 3                     | ✅ Matched | Removed       |
+| `beads_viewer`    | 3                 | 3                     | ✅ Matched | Removed       |
 
 ## Architectural Parity Adjustments
 
