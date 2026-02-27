@@ -84,12 +84,19 @@ func BuildSearchText(name, docstring, signature, code string) string {
 	if signature != "" {
 		parts = append(parts, signature)
 	}
-	// Truncate code to avoid exceeding token limits
+	// Truncate code aggressively to avoid exceeding strict 128-token limits (e.g., TEI)
 	if code != "" {
-		if len(code) > 2000 {
-			code = code[:2000]
+		if len(code) > 200 {
+			code = code[:200]
 		}
 		parts = append(parts, code)
 	}
-	return strings.Join(parts, "\n")
+
+	result := strings.Join(parts, "\n")
+
+	// Hard cap characters assuming ~1-2 chars per token for extremely dense code chunks (128 max tokens)
+	if len(result) > 180 {
+		return result[:180]
+	}
+	return result
 }

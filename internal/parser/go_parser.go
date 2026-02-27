@@ -39,8 +39,6 @@ func parseGo(root *sitter.Node, code []byte, result *types.FileParseResult) {
 				}
 			}
 
-		case "comment":
-			// standalone comments, handled contextually
 		}
 	}
 }

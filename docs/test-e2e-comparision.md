@@ -151,27 +151,47 @@ Comprehensive feature and architecture comparison between our **Go** implementat
 
 The original E2E comparison between Go and the Python reference implementation is preserved below for reference.
 
-### Pass/Fail Criteria
+### Pass/Fail Criteria (STRICT EQUALITY)
 
 ```
-IF Go_elements >= Python_elements → ✅ PASS
-IF Go_elements <  Python_elements → ❌ FAIL
-Files must match exactly: Go_files == Python_files
+Files:    Go_files    == Python_files    → ✅ PASS
+Elements: Go_elements == Python_elements → ✅ PASS
+Any mismatch → ❌ FAIL
 ```
 
-### Example Run (music-theory)
+### Latest Run (music-theory)
 
 ```
+═══════════════════════════════════════
+  E2E Comparison: Go vs Python
+  Criteria: EXACT MATCH (==)
+═══════════════════════════════════════
+
 📦 Target: /Users/steve/duyhunghd6/music-theory
 
 🔵 Indexing with Go...
-   Go: 770 files, 1499 elements
+   Go: 770 files, 1548 elements
 🟡 Indexing with Python...
    Python: 770 files, 1328 elements
 
-═══════════════════════════════════
-✅ PASS: Files=770, Go=1499 >= Python=1328 (+171)
+═══════════════════════════════════════
+✅ Files match: 770 == 770
+❌ FAIL: Element count mismatch (Go=1548 != Python=1328, Go has +220 extra)
+═══════════════════════════════════════
+💥 OVERALL: FAIL
 ```
+
+### Element Breakdown
+
+| Type          | Go       | Python   | Diff     |
+| ------------- | -------- | -------- | -------- |
+| file          | 770      | 770      | ✅ 0     |
+| class         | 185      | 174      | +11      |
+| function      | 529      | 210      | +319     |
+| documentation | 64       | 174      | -110     |
+| **Total**     | **1548** | **1328** | **+220** |
+
+**Root cause**: Go's tree-sitter parsers extract more functions (arrow functions, callbacks, nested functions) than Python's parsers. Python generates more documentation elements.
 
 ### One-Liner Script
 
@@ -237,19 +257,30 @@ PY_FILES=$(echo "$PY_OUT" | awk '{print $1}')
 PY_ELEMENTS=$(echo "$PY_OUT" | awk '{print $2}')
 echo "   Python: $PY_FILES files, $PY_ELEMENTS elements"
 
-# --- Judge ---
+# --- Judge (STRICT EQUALITY) ---
 echo ""
 echo "═══════════════════════════════════"
+PASS=true
 if [ "$GO_FILES" -ne "$PY_FILES" ]; then
   echo "❌ FAIL: File count mismatch (Go=$GO_FILES, Python=$PY_FILES)"
-  exit 1
-elif [ "$GO_ELEMENTS" -lt "$PY_ELEMENTS" ]; then
-  echo "❌ FAIL: Go elements < Python ($GO_ELEMENTS < $PY_ELEMENTS)"
-  exit 1
+  PASS=false
 else
+  echo "✅ Files match: $GO_FILES == $PY_FILES"
+fi
+if [ "$GO_ELEMENTS" -ne "$PY_ELEMENTS" ]; then
   DIFF=$((GO_ELEMENTS - PY_ELEMENTS))
-  echo "✅ PASS: Files=$GO_FILES, Go=$GO_ELEMENTS >= Python=$PY_ELEMENTS (+$DIFF)"
+  echo "❌ FAIL: Element count mismatch (Go=$GO_ELEMENTS != Python=$PY_ELEMENTS, diff=$DIFF)"
+  PASS=false
+else
+  echo "✅ Elements match: $GO_ELEMENTS == $PY_ELEMENTS"
+fi
+echo "═══════════════════════════════════"
+if [ "$PASS" = true ]; then
+  echo "🎉 PASS: Go == Python"
   exit 0
+else
+  echo "💥 OVERALL: FAIL"
+  exit 1
 fi
 ```
 

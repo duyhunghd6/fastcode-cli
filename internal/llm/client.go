@@ -7,6 +7,7 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"strings"
 	"time"
 )
 
@@ -129,7 +130,14 @@ func (c *Client) Embed(texts []string, model string) ([][]float32, error) {
 		Input: texts,
 	}
 
-	body, err := c.postTo(c.EmbeddingBaseURL, "/embeddings", req)
+	var url string
+	if strings.HasSuffix(c.EmbeddingBaseURL, "/embeddings") {
+		url = c.EmbeddingBaseURL
+	} else {
+		url = strings.TrimSuffix(c.EmbeddingBaseURL, "/") + "/embeddings"
+	}
+
+	body, err := c.postTo(url, "", req)
 	if err != nil {
 		return nil, err
 	}

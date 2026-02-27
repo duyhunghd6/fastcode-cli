@@ -55,19 +55,31 @@ func (idx *Indexer) indexFile(fi loader.FileInfo, content string, pr *types.File
 	// File-level element
 	idx.addFileElement(fi, content, pr)
 
+	// Track methods already emitted via cls.Methods to avoid double-counting
+	// (JS/TS parsers put class methods in both cls.Methods and pr.Functions;
+	// Python's indexer only iterates pr.Functions for top-level functions)
+	emittedMethods := make(map[string]bool)
+
 	// Class-level elements
 	for _, cls := range pr.Classes {
 		idx.addClassElement(fi, content, pr, cls)
 		// Emit each class method as a separate function element
-		// (Python/JS/TS store methods in cls.Methods, not in pr.Functions)
 		for _, method := range cls.Methods {
 			idx.addFunctionElement(fi, content, pr, method)
+			// Key: className + "." + methodName to uniquely identify
+			emittedMethods[cls.Name+"."+method.Name] = true
 		}
 	}
 
-	// Function-level elements (includes class methods — JS/TS parser puts them in
-	// pr.Functions, matching Python's behavior where methods are in both lists)
+	// Function-level elements (top-level functions only — skip methods already
+	// emitted above to match Python's behavior)
 	for _, fn := range pr.Functions {
+		if fn.IsMethod && fn.ClassName != "" {
+			key := fn.ClassName + "." + fn.Name
+			if emittedMethods[key] {
+				continue
+			}
+		}
 		idx.addFunctionElement(fi, content, pr, fn)
 	}
 
@@ -171,7 +183,7 @@ func (idx *Indexer) addDocElement(fi loader.FileInfo, pr *types.FileParseResult)
 	elem := types.CodeElement{
 		ID:           idx.genID("doc", fi.RelativePath),
 		Type:         "documentation",
-		Name:         fi.RelativePath + " (docs)",
+		Name:         "Documentation: " + fi.RelativePath,
 		FilePath:     fi.Path,
 		RelativePath: fi.RelativePath,
 		Language:     fi.Language,

@@ -468,9 +468,9 @@ const double = (x) => x * 2;
 	if result == nil {
 		t.Fatal("nil")
 	}
-	// Arrow functions in lexical_declaration are extracted as named functions.
-	if len(result.Functions) < 1 {
-		t.Errorf("expected at least 1 arrow function, got %d", len(result.Functions))
+	// Arrow functions in lexical_declaration are intentionally ignored to match Python strict equality.
+	if len(result.Functions) != 0 {
+		t.Errorf("expected 0 arrow functions (matching Python), got %d", len(result.Functions))
 	}
 }
 

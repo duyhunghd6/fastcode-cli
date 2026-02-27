@@ -7,56 +7,85 @@ import (
 	sitter "github.com/smacker/go-tree-sitter"
 )
 
-// parseJS extracts classes, functions, and imports from JavaScript/TypeScript source.
 func parseJS(root *sitter.Node, code []byte, result *types.FileParseResult) {
-	// Extract module-level docstring from first comment (matches Python behavior).
+	// Extract module docstring (mimic Python: only check root-level children, no recursion!)
 	for i := 0; i < int(root.ChildCount()); i++ {
 		child := root.Child(i)
 		if child.Type() == "comment" {
 			text := child.Content(code)
 			if strings.HasPrefix(text, "//") {
-				result.ModuleDocstring = strings.TrimSpace(text[2:])
+				text = strings.TrimPrefix(text, "//")
+				text = strings.TrimPrefix(text, " ")
+				result.ModuleDocstring = strings.TrimSpace(text)
 			} else if strings.HasPrefix(text, "/*") && strings.HasSuffix(text, "*/") {
 				result.ModuleDocstring = strings.TrimSpace(text[2 : len(text)-2])
+			} else {
+				result.ModuleDocstring = strings.TrimSpace(text)
 			}
 			break
 		}
-		// Stop at first non-comment node
-		if child.Type() != "comment" {
-			break
+	}
+
+	// Extract imports separately, scanning root level or export/import stmts
+	var extractImports func(*sitter.Node)
+	extractImports = func(n *sitter.Node) {
+		if n.Type() == "import_statement" {
+			result.Imports = append(result.Imports, extractJSImport(n, code))
+		} else if n.Type() == "export_statement" {
+			for j := 0; j < int(n.ChildCount()); j++ {
+				c := n.Child(j)
+				if c.Type() == "import_statement" {
+					result.Imports = append(result.Imports, extractJSImport(c, code))
+				}
+			}
+		} else {
+			for j := 0; j < int(n.ChildCount()); j++ {
+				extractImports(n.Child(j))
+			}
 		}
 	}
-	visitJSNode(root, code, result, "")
-}
+	extractImports(root)
 
-func visitJSNode(node *sitter.Node, code []byte, result *types.FileParseResult, className string) {
-	for i := 0; i < int(node.ChildCount()); i++ {
-		child := node.Child(i)
-		switch child.Type() {
-		case "import_statement":
-			result.Imports = append(result.Imports, extractJSImport(child, code))
-		case "class_declaration":
-			ci := extractJSClass(child, code)
-			result.Classes = append(result.Classes, ci)
-		case "interface_declaration", "type_alias_declaration":
-			// Python treats interfaces and type aliases as classes
-			ci := extractJSInterface(child, code)
+	// Recursive visitor for classes and functions
+	var visit func(*sitter.Node, string)
+	visit = func(n *sitter.Node, currentClass string) {
+		typ := n.Type()
+		if typ == "class_declaration" || typ == "interface_declaration" {
+			var ci types.ClassInfo
+			if typ == "class_declaration" {
+				ci = extractJSClass(n, code)
+			} else {
+				// Python treats interfaces as classes, ignores type aliases
+				ci = extractJSInterface(n, code)
+			}
 			if ci.Name != "" {
 				result.Classes = append(result.Classes, ci)
 			}
-		case "function_declaration":
-			fn := extractJSFunction(child, code, className)
+			for i := 0; i < int(n.ChildCount()); i++ {
+				visit(n.Child(i), ci.Name)
+			}
+		} else if typ == "function_declaration" || typ == "arrow_function" || typ == "function" {
+			fn := extractJSFunction(n, code, currentClass)
 			if fn.Name != "" {
 				result.Functions = append(result.Functions, fn)
 			}
-		case "export_statement":
-			visitJSNode(child, code, result, className)
-		case "lexical_declaration":
-			// Handle: const foo = () => {} or const foo = function() {}
-			fns := extractJSArrowFunctions(child, code)
-			result.Functions = append(result.Functions, fns...)
+			// Mimic Python: do NOT recurse into 'arrow_function' or 'function' children!
+			// Python doesn't traverse inside functions... actually it visits node.children in JS method parsing?
+			// But for full AST visit, it recurses! In Python:
+			// elif node.type in ('function_declaration', 'arrow_function', 'function'): func_info = ... children aren't visited!
+		} else if typ == "method_definition" || typ == "method_signature" {
+			// handled here instead of recursively inside class
+			fn := extractJSMethod(n, code, currentClass)
+			if fn.Name != "" {
+				result.Functions = append(result.Functions, fn)
+			}
+		} else {
+			for i := 0; i < int(n.ChildCount()); i++ {
+				visit(n.Child(i), currentClass)
+			}
 		}
 	}
+	visit(root, "")
 }
 
 func extractJSImport(node *sitter.Node, code []byte) types.ImportInfo {
@@ -170,7 +199,7 @@ func extractJSClass(node *sitter.Node, code []byte) types.ClassInfo {
 	for i := 0; i < int(node.ChildCount()); i++ {
 		child := node.Child(i)
 		switch child.Type() {
-		case "identifier":
+		case "identifier", "type_identifier":
 			ci.Name = child.Content(code)
 		case "class_heritage":
 			for j := 0; j < int(child.ChildCount()); j++ {
@@ -219,6 +248,33 @@ func extractJSClassMethods(body *sitter.Node, code []byte, className string) []t
 	return methods
 }
 
+func extractJSMethod(node *sitter.Node, code []byte, className string) types.FunctionInfo {
+	fn := types.FunctionInfo{
+		StartLine: int(node.StartPoint().Row) + 1,
+		EndLine:   int(node.EndPoint().Row) + 1,
+		ClassName: className,
+		IsMethod:  true,
+	}
+	for i := 0; i < int(node.ChildCount()); i++ {
+		child := node.Child(i)
+		switch child.Type() {
+		case "identifier", "property_identifier":
+			fn.Name = child.Content(code)
+		case "formal_parameters":
+			fn.Parameters = extractJSParams(child, code)
+		case "type_annotation":
+			fn.ReturnType = child.Content(code)
+		case "statement_block":
+			fn.Calls = extractJSCalls(child, code)
+		}
+	}
+	text := node.Content(code)
+	if len(text) > 5 && text[:5] == "async" {
+		fn.IsAsync = true
+	}
+	return fn
+}
+
 func extractJSFunction(node *sitter.Node, code []byte, className string) types.FunctionInfo {
 	fn := types.FunctionInfo{
 		StartLine: int(node.StartPoint().Row) + 1,
@@ -226,6 +282,7 @@ func extractJSFunction(node *sitter.Node, code []byte, className string) types.F
 		ClassName: className,
 		IsMethod:  className != "",
 	}
+
 	for i := 0; i < int(node.ChildCount()); i++ {
 		child := node.Child(i)
 		switch child.Type() {

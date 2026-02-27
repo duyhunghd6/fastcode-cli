@@ -31,15 +31,11 @@ func DefaultConfig() Config {
 	return Config{
 		MaxFileSize: 5 * 1024 * 1024, // 5MB (matches Python)
 		ExcludeDirs: []string{
-			".git", ".svn", ".hg", "node_modules", "__pycache__",
-			".venv", "venv", "dist", "build",
-			".idea", ".vscode", "target",
+			".git", "node_modules", "__pycache__",
+			"dist", "build",
 		},
 		ExcludeFiles: []string{
-			"*.map", "*.lock",
-			"*.bundle.js", "*.pyc",
-			"yarn.lock", "go.sum",
-			".DS_Store", ".env",
+			"*.pyc", "*.min.js", "*.bundle.js", "*.lock",
 		},
 	}
 }
@@ -227,10 +223,11 @@ func matchGitignorePattern(pattern, path string) bool {
 
 	// Directory-only patterns should only match directories
 	if dirOnly && !isDir {
-		// But also match files INSIDE the directory
-		if !strings.HasPrefix(cleanPath, cleanPattern+"/") && cleanPath != cleanPattern {
-			return false
+		// Match files INSIDE the directory
+		if strings.HasPrefix(cleanPath, cleanPattern+"/") || cleanPath == cleanPattern {
+			return true
 		}
+		return false
 	}
 
 	// 1. Try matching against basename (e.g., "*.log" matches "debug.log")
