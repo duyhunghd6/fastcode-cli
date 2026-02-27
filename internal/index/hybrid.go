@@ -1,7 +1,9 @@
 package index
 
 import (
+	"fmt"
 	"sort"
+	"strings"
 
 	"github.com/duyhunghd6/fastcode-cli/internal/llm"
 	"github.com/duyhunghd6/fastcode-cli/internal/types"
@@ -36,6 +38,66 @@ func NewHybridRetriever(vs *VectorStore, bm25 *BM25) *HybridRetriever {
 	}
 }
 
+func buildBM25Text(elem *types.CodeElement) string {
+	var parts []string
+	if elem.Name != "" {
+		parts = append(parts, elem.Name)
+	}
+	if elem.Type != "" {
+		parts = append(parts, elem.Type)
+	}
+	if elem.Language != "" {
+		parts = append(parts, elem.Language)
+	}
+	if elem.RelativePath != "" {
+		parts = append(parts, elem.RelativePath)
+	}
+	if elem.Docstring != "" {
+		parts = append(parts, elem.Docstring)
+	}
+	if elem.Signature != "" {
+		parts = append(parts, elem.Signature)
+	}
+	if elem.Summary != "" {
+		parts = append(parts, elem.Summary)
+	}
+	if elem.Code != "" {
+		code := elem.Code
+		if len(code) > 1000 {
+			code = code[:1000]
+		}
+		parts = append(parts, code)
+	}
+	return strings.Join(parts, " ")
+}
+
+func buildEmbeddingText(elem *types.CodeElement) string {
+	var parts []string
+	if elem.Type != "" {
+		parts = append(parts, fmt.Sprintf("Type: %s", elem.Type))
+	}
+	if elem.Name != "" {
+		parts = append(parts, fmt.Sprintf("Name: %s", elem.Name))
+	}
+	if elem.Signature != "" {
+		parts = append(parts, fmt.Sprintf("Signature: %s", elem.Signature))
+	}
+	if elem.Docstring != "" {
+		parts = append(parts, fmt.Sprintf("Documentation: %s", elem.Docstring))
+	}
+	if elem.Summary != "" {
+		parts = append(parts, elem.Summary)
+	}
+	if elem.Code != "" {
+		code := elem.Code
+		if len(code) > 10000 {
+			code = code[:10000] + "..."
+		}
+		parts = append(parts, fmt.Sprintf("Code:\n%s", code))
+	}
+	return strings.Join(parts, "\n")
+}
+
 // IndexElements indexes code elements into both BM25 and vector stores.
 // embedder may be nil if embeddings are not available.
 func (hr *HybridRetriever) IndexElements(elements []types.CodeElement, embedder *llm.Embedder) error {
@@ -45,15 +107,16 @@ func (hr *HybridRetriever) IndexElements(elements []types.CodeElement, embedder 
 		hr.elements[elem.ID] = elem
 
 		// Add to BM25
-		searchText := llm.BuildSearchText(elem.Name, elem.Docstring, elem.Signature, elem.Code)
+		searchText := buildBM25Text(elem)
 		hr.bm25.AddDocument(elem.ID, searchText)
 	}
 
 	// Generate and store embeddings if embedder is available
 	if embedder != nil {
 		texts := make([]string, len(elements))
-		for i, elem := range elements {
-			texts[i] = llm.BuildSearchText(elem.Name, elem.Docstring, elem.Signature, elem.Code)
+		for i := range elements {
+			elem := &elements[i]
+			texts[i] = buildEmbeddingText(elem)
 		}
 
 		embeddings, err := embedder.EmbedTexts(texts)
@@ -77,7 +140,11 @@ func (hr *HybridRetriever) Search(query string, queryVec []float32, topK int) []
 	scores := make(map[string]float64)
 
 	// BM25 keyword search
-	bm25Results := hr.bm25.Search(query, topK*2)
+	bm25Limit := 10
+	if topK*2 > 10 {
+		bm25Limit = topK * 2
+	}
+	bm25Results := hr.bm25.Search(query, bm25Limit)
 	maxBM25 := 0.0
 	for _, r := range bm25Results {
 		if r.Score > maxBM25 {
@@ -94,9 +161,32 @@ func (hr *HybridRetriever) Search(query string, queryVec []float32, topK int) []
 
 	// Vector semantic search
 	if queryVec != nil && hr.vectorStore.Count() > 0 {
-		vecResults := hr.vectorStore.Search(queryVec, topK*2)
+		vecLimit := 20
+		if topK*2 > 20 {
+			vecLimit = topK * 2
+		}
+		vecResults := hr.vectorStore.Search(queryVec, vecLimit)
 		for _, r := range vecResults {
 			scores[r.ID] += r.Score * hr.SemanticWeight
+		}
+	}
+
+	// Apply _rerank type weights
+	for id, s := range scores {
+		elem, ok := hr.elements[id]
+		if ok {
+			weight := 1.0
+			switch elem.Type {
+			case "function":
+				weight = 1.2
+			case "class":
+				weight = 1.1
+			case "file":
+				weight = 0.9
+			case "documentation":
+				weight = 0.8
+			}
+			scores[id] = s * weight
 		}
 	}
 

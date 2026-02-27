@@ -81,7 +81,7 @@ func (te *ToolExecutor) searchCode(query string) (*ToolResult, error) {
 		}
 	}
 
-	results := te.hybrid.Search(query, queryVec, 10)
+	results := te.hybrid.Search(query, queryVec, 4)
 	var elements []types.CodeElement
 	for _, r := range results {
 		if r.Element != nil {

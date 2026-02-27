@@ -82,6 +82,11 @@ func (ia *IterativeAgent) Retrieve(query string, pq *ProcessedQuery) (*Retrieval
 	ia.totalTokensUsed = 0
 	ia.rounds = 0
 
+	// Perform initial standard search to pre-populate context (like Python's _perform_standard_retrieval)
+	if res, err := ia.toolExecutor.searchCode(query); err == nil && res != nil {
+		ia.gatheredElements = append(ia.gatheredElements, res.Elements...)
+	}
+
 	// Adaptive parameters based on query complexity
 	maxRounds := ia.config.MaxRounds
 	if pq.Complexity < 30 {
@@ -153,10 +158,10 @@ func (ia *IterativeAgent) Retrieve(query string, pq *ProcessedQuery) (*Retrieval
 // executeRound runs a single round of the iterative retrieval.
 func (ia *IterativeAgent) executeRound(query string, pq *ProcessedQuery, round int) (*RoundResult, error) {
 	prompt := ia.buildRoundPrompt(query, pq, round)
+	fullPrompt := fmt.Sprintf("%s\n\n%s", systemPrompt(), prompt)
 
 	response, err := ia.client.ChatCompletion([]llm.ChatMessage{
-		{Role: "system", Content: systemPrompt()},
-		{Role: "user", Content: prompt},
+		{Role: "user", Content: fullPrompt},
 	}, ia.config.Temperature, 2000)
 	if err != nil {
 		return nil, fmt.Errorf("LLM call: %w", err)

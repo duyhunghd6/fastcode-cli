@@ -83,6 +83,15 @@ func (c *Client) ChatCompletion(messages []ChatMessage, temperature float64, max
 		MaxTokens:   maxTokens,
 	}
 
+	// Dump prompt if debug file is set and exit early
+	if dumpFile := os.Getenv("FASTCODE_DEBUG_PROMPT_FILE"); dumpFile != "" {
+		data, err := json.MarshalIndent(req, "", "  ")
+		if err == nil {
+			_ = os.WriteFile(dumpFile, data, 0644)
+		}
+		return "DEBUG_PROMPT_WRITTEN", nil
+	}
+
 	body, err := c.post("/chat/completions", req)
 	if err != nil {
 		return "", err
