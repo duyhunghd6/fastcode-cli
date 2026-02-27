@@ -261,7 +261,7 @@ func TestBuildRoundNPromptWithGatheredElements(t *testing.T) {
 	hr := index.NewHybridRetriever(vs, bm)
 	te := NewToolExecutor(hr, nil, nil)
 	cfg := DefaultAgentConfig()
-	agent := NewIterativeAgent(client, te, cfg)
+	agent := NewIterativeAgent(client, te, nil, cfg)
 
 	// Init adaptive params
 	agent.initializeAdaptiveParams(50)
@@ -293,7 +293,7 @@ func TestBuildRoundNPromptManyGatheredElements(t *testing.T) {
 	hr := index.NewHybridRetriever(vs, bm)
 	te := NewToolExecutor(hr, nil, nil)
 	cfg := DefaultAgentConfig()
-	agent := NewIterativeAgent(client, te, cfg)
+	agent := NewIterativeAgent(client, te, nil, cfg)
 
 	// Init adaptive params
 	agent.initializeAdaptiveParams(50)
@@ -322,7 +322,7 @@ func TestNewIterativeAgentWithZeroConfig(t *testing.T) {
 	te := NewToolExecutor(hr, nil, nil)
 
 	// Zero config should use defaults
-	agent := NewIterativeAgent(client, te, AgentConfig{})
+	agent := NewIterativeAgent(client, te, nil, AgentConfig{})
 	if agent.config.MaxRounds != 4 {
 		t.Errorf("zero config MaxRounds = %d, want 4 (default)", agent.config.MaxRounds)
 	}
@@ -361,7 +361,7 @@ func TestRetrieveNoMoreActions(t *testing.T) {
 
 	cfg := DefaultAgentConfig()
 	cfg.MaxRounds = 4
-	agent := NewIterativeAgent(client, te, cfg)
+	agent := NewIterativeAgent(client, te, nil, cfg)
 
 	pq := ProcessQuery("test")
 	result, err := agent.Retrieve("test", pq)
@@ -400,7 +400,7 @@ func TestRetrieveLowComplexityFewRounds(t *testing.T) {
 
 	cfg := DefaultAgentConfig()
 	cfg.MaxRounds = 5
-	agent := NewIterativeAgent(client, te, cfg)
+	agent := NewIterativeAgent(client, te, nil, cfg)
 
 	// Simple query → complexity < 30 → maxRounds capped at 2
 	pq := &ProcessedQuery{Original: "find main", Cleaned: "find main", Complexity: 15, QueryType: "locate", Keywords: []string{"main"}}
@@ -446,7 +446,7 @@ func TestRetrieveToolCallExecution(t *testing.T) {
 	te := NewToolExecutor(hr, nil, elements)
 
 	cfg := DefaultAgentConfig()
-	agent := NewIterativeAgent(client, te, cfg)
+	agent := NewIterativeAgent(client, te, nil, cfg)
 
 	pq := &ProcessedQuery{Original: "find main", Cleaned: "find main", Complexity: 50, QueryType: "locate", Keywords: []string{"main"}}
 	result, err := agent.Retrieve("find main", pq)

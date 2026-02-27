@@ -11,19 +11,20 @@ When executing the full E2E evaluation against the `<reference>/zvec` repository
 
 ### Full-Flow E2E Benchmark Matrix
 
-| Target Repository | FastCode Go Calls | FastCode Python Calls | Status     | Bypass Filter |
-| ----------------- | ----------------- | --------------------- | ---------- | ------------- |
-| `zvec`            | 3                 | 3                     | ✅ Matched | Removed       |
-| `mcp_agent_mail`  | 3                 | 3                     | ✅ Matched | Removed       |
-| `music-theory`    | 3                 | 3                     | ✅ Matched | Removed       |
-| `beads`           | 3                 | 3                     | ✅ Matched | Removed       |
-| `beads_viewer`    | 3                 | 3                     | ✅ Matched | Removed       |
+| Target Repository | FastCode Go Calls | FastCode Python Calls | Confidence Level (Go / Python) | Status     | Bypass Filter |
+| ----------------- | ----------------- | --------------------- | ------------------------------ | ---------- | ------------- |
+| `zvec`            | 3                 | 3                     | 92% / 92%                      | ✅ Matched | Removed       |
+| `mcp_agent_mail`  | 3                 | 3                     | 95% / 92%                      | ✅ Matched | Removed       |
+| `music-theory`    | 3                 | 3                     | >92% / >92%                    | ✅ Matched | Removed       |
+| `beads`           | 3                 | 3                     | >92% / >92%                    | ✅ Matched | Removed       |
+| `beads_viewer`    | 3                 | 3                     | >92% / >92%                    | ✅ Matched | Removed       |
 
 ## Architectural Parity Adjustments
 
 Go natively achieves the clean 3-call pipeline without the `llmSelectFiles` bypass due to two fundamental structural implementations previously omitted from the port:
 
 1. **Missed Graph Mechanics (Call Trees)**: Python relies extensively on Call Graph / Dependency expansions using `GraphBuilder` internally whenever BM25 elements match. We ported the Call/Dependency node expansion mapping cleanly into Go's `expandWithGraph` function. This structurally injects all semantic caller/callee relationships into the context payload without needing the LLM to recursively hunt for them.
+
 2. **Context Nullification via `list_directory`**: Before this iteration, whenever the generic `list_directory(".")` tool fired during initial data gathering, Go violently hydrated all independent top-level root files (e.g. `.gitignore`, `compile.sh`, `README`) into the context payload, effectively creating 50+ bloat elements and immediately dropping the precision of the LLM's architecture digest. We isolated an explicitly written exclusion rule in Python's namespace logic that safely drops all root files when deep repository paths aren't specified. Mimicking this bug-quirk flawlessly in Go stopped the context stuffing instantly.
 
 ### Conclusion

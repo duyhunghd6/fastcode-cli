@@ -186,7 +186,7 @@ func (e *Engine) queryWithAgent(question string, pq *agent.ProcessedQuery) (*Que
 	toolExec := agent.NewToolExecutor(e.hybrid, e.embedder, e.elements)
 	toolExec.SetRepoRoot(e.repoPath, e.repoName)
 	agentCfg := agent.DefaultAgentConfig()
-	iterAgent := agent.NewIterativeAgent(e.client, toolExec, agentCfg)
+	iterAgent := agent.NewIterativeAgent(e.client, toolExec, e.graphs, agentCfg)
 
 	// Run retrieval
 	retrieval, err := iterAgent.Retrieve(question, pq)

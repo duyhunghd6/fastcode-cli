@@ -18,6 +18,7 @@ var buildTime = "unknown"
 var gitCommit = "unknown"
 
 func main() {
+	fmt.Println("[init] Starting fastcode main execution...")
 	// Load global config from ~/.fastcode/config.yaml first
 	if _, err := config.Load(); err != nil {
 		log.Printf("warning: config load: %v", err)

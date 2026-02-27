@@ -36,7 +36,7 @@ func TestNewIterativeAgent(t *testing.T) {
 	te := NewToolExecutor(hr, nil, nil)
 	cfg := DefaultAgentConfig()
 
-	agent := NewIterativeAgent(client, te, cfg)
+	agent := NewIterativeAgent(client, te, nil, cfg)
 	if agent == nil {
 		t.Fatal("NewIterativeAgent returned nil")
 	}
@@ -61,7 +61,7 @@ func TestParseRound1ResponseValidJSON(t *testing.T) {
 	hr := index.NewHybridRetriever(vs, bm)
 	te := NewToolExecutor(hr, nil, nil)
 	cfg := DefaultAgentConfig()
-	agent := NewIterativeAgent(client, te, cfg)
+	agent := NewIterativeAgent(client, te, nil, cfg)
 
 	response := `{"confidence": 85, "reasoning": "Found the handler", "query_complexity": 45, "tool_calls": [{"tool": "search_codebase", "parameters": {"search_term": "auth handler"}}]}`
 	result, err := agent.parseRound1Response(response)
@@ -89,7 +89,7 @@ func TestParseRound1ResponseCodeFence(t *testing.T) {
 	hr := index.NewHybridRetriever(vs, bm)
 	te := NewToolExecutor(hr, nil, nil)
 	cfg := DefaultAgentConfig()
-	agent := NewIterativeAgent(client, te, cfg)
+	agent := NewIterativeAgent(client, te, nil, cfg)
 
 	response := "Here is my response:\n```json\n{\"confidence\": 90, \"reasoning\": \"done\"}\n```"
 	result, err := agent.parseRound1Response(response)
@@ -108,7 +108,7 @@ func TestParseRound1ResponseBadJSON(t *testing.T) {
 	hr := index.NewHybridRetriever(vs, bm)
 	te := NewToolExecutor(hr, nil, nil)
 	cfg := DefaultAgentConfig()
-	agent := NewIterativeAgent(client, te, cfg)
+	agent := NewIterativeAgent(client, te, nil, cfg)
 
 	result, err := agent.parseRound1Response("this is not json at all")
 	if err != nil {
@@ -126,7 +126,7 @@ func TestBuildRound1Prompt(t *testing.T) {
 	hr := index.NewHybridRetriever(vs, bm)
 	te := NewToolExecutor(hr, nil, nil)
 	cfg := DefaultAgentConfig()
-	agent := NewIterativeAgent(client, te, cfg)
+	agent := NewIterativeAgent(client, te, nil, cfg)
 
 	pq := ProcessQuery("how does auth work?")
 	prompt := agent.buildRound1Prompt("how does auth work?", pq)
@@ -151,7 +151,7 @@ func TestBuildRoundNPrompt(t *testing.T) {
 	hr := index.NewHybridRetriever(vs, bm)
 	te := NewToolExecutor(hr, nil, nil)
 	cfg := DefaultAgentConfig()
-	agent := NewIterativeAgent(client, te, cfg)
+	agent := NewIterativeAgent(client, te, nil, cfg)
 
 	// Init adaptive params for proper budget display
 	agent.initializeAdaptiveParams(50)
@@ -213,7 +213,7 @@ func TestRetrieveHighConfidence(t *testing.T) {
 
 	cfg := DefaultAgentConfig()
 	cfg.MaxRounds = 3
-	agent := NewIterativeAgent(client, te, cfg)
+	agent := NewIterativeAgent(client, te, nil, cfg)
 
 	pq := ProcessQuery("where is main?")
 	result, err := agent.Retrieve("where is main?", pq)
@@ -243,7 +243,7 @@ func TestRetrieveLLMError(t *testing.T) {
 
 	cfg := DefaultAgentConfig()
 	cfg.MaxRounds = 1
-	agent := NewIterativeAgent(client, te, cfg)
+	agent := NewIterativeAgent(client, te, nil, cfg)
 
 	pq := ProcessQuery("test")
 	result, err := agent.Retrieve("test", pq)
