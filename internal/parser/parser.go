@@ -54,8 +54,6 @@ func (p *Parser) ParseFile(filePath, content string) *types.FileParseResult {
 	rootNode := tree.RootNode()
 
 	switch language {
-	case "go":
-		parseGo(rootNode, code, result)
 	case "python":
 		parsePython(rootNode, code, result)
 	case "javascript", "typescript", "tsx":
@@ -77,7 +75,7 @@ func (p *Parser) ParseFile(filePath, content string) *types.FileParseResult {
 // and should be parsed for classes, functions, and imports.
 func isCodeLanguage(lang string) bool {
 	switch lang {
-	case "go", "python", "javascript", "typescript", "tsx",
+	case "python", "javascript", "typescript", "tsx",
 		"java", "rust", "c", "cpp", "csharp", "ruby", "php",
 		"swift", "kotlin", "scala":
 		return true

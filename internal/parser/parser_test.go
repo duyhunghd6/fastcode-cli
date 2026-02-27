@@ -51,6 +51,8 @@ func TestParseNonCodeFile(t *testing.T) {
 }
 
 // --- Go Parser Tests ---
+// Go files are treated as non-code files (matching Python's _parse_generic behavior)
+// so they produce file-level results only: no functions, classes, or imports.
 
 func TestParseGoFunctions(t *testing.T) {
 	p := New()
@@ -71,14 +73,9 @@ func add(a, b int) int {
 	if result == nil {
 		t.Fatal("ParseFile returned nil")
 	}
-	if len(result.Functions) != 2 {
-		t.Errorf("expected 2 functions, got %d", len(result.Functions))
-	}
-	if result.Functions[0].Name != "HelloWorld" {
-		t.Errorf("first function name = %q, want HelloWorld", result.Functions[0].Name)
-	}
-	if len(result.Functions[0].Parameters) == 0 {
-		t.Error("expected parameters for HelloWorld")
+	// Go files are non-code: no function extraction (matches Python parity)
+	if len(result.Functions) != 0 {
+		t.Errorf("Go files should have 0 functions (Python parity), got %d", len(result.Functions))
 	}
 }
 
@@ -102,24 +99,12 @@ func (s *Server) Stop() {
 	if result == nil {
 		t.Fatal("ParseFile returned nil")
 	}
-	if len(result.Classes) != 1 {
-		t.Errorf("expected 1 class (struct), got %d", len(result.Classes))
+	// Go files are non-code: no class/method extraction (matches Python parity)
+	if len(result.Classes) != 0 {
+		t.Errorf("Go files should have 0 classes (Python parity), got %d", len(result.Classes))
 	}
-	if result.Classes[0].Name != "Server" {
-		t.Errorf("class name = %q, want Server", result.Classes[0].Name)
-	}
-	if result.Classes[0].Kind != "struct" {
-		t.Errorf("class kind = %q, want struct", result.Classes[0].Kind)
-	}
-	// Methods should be in Functions list
-	methodCount := 0
-	for _, fn := range result.Functions {
-		if fn.IsMethod && fn.ClassName == "Server" {
-			methodCount++
-		}
-	}
-	if methodCount != 2 {
-		t.Errorf("expected 2 methods on Server, got %d", methodCount)
+	if len(result.Functions) != 0 {
+		t.Errorf("Go files should have 0 functions (Python parity), got %d", len(result.Functions))
 	}
 }
 
@@ -136,19 +121,9 @@ type Handler interface {
 	if result == nil {
 		t.Fatal("ParseFile returned nil")
 	}
-	if len(result.Classes) != 1 {
-		t.Errorf("expected 1 class (interface), got %d", len(result.Classes))
-	}
-	if result.Classes[0].Kind != "interface" {
-		t.Errorf("kind = %q, want interface", result.Classes[0].Kind)
-	}
-	if result.Classes[0].Name != "Handler" {
-		t.Errorf("name = %q, want Handler", result.Classes[0].Name)
-	}
-	// Note: interface methods depend on tree-sitter grammar version (method_spec nodes)
-	// Some grammar versions may not expose these nodes
-	if len(result.Classes[0].Methods) == 0 {
-		t.Log("interface methods not extracted — may be tree-sitter grammar version difference")
+	// Go files are non-code: no class extraction (matches Python parity)
+	if len(result.Classes) != 0 {
+		t.Errorf("Go files should have 0 classes (Python parity), got %d", len(result.Classes))
 	}
 }
 
@@ -166,11 +141,9 @@ func main() {
 	if result == nil {
 		t.Fatal("nil")
 	}
-	if len(result.Imports) != 1 {
-		t.Errorf("expected 1 import, got %d", len(result.Imports))
-	}
-	if result.Imports[0].Module != "fmt" {
-		t.Errorf("import module = %q, want fmt", result.Imports[0].Module)
+	// Go files are non-code: no import extraction (matches Python parity)
+	if len(result.Imports) != 0 {
+		t.Errorf("Go files should have 0 imports (Python parity), got %d", len(result.Imports))
 	}
 }
 
@@ -190,8 +163,9 @@ func main() {}
 	if result == nil {
 		t.Fatal("nil")
 	}
-	if len(result.Imports) != 3 {
-		t.Errorf("expected 3 imports, got %d", len(result.Imports))
+	// Go files are non-code: no import extraction (matches Python parity)
+	if len(result.Imports) != 0 {
+		t.Errorf("Go files should have 0 imports (Python parity), got %d", len(result.Imports))
 	}
 }
 
@@ -210,17 +184,9 @@ func main() {}
 	if result == nil {
 		t.Fatal("nil")
 	}
-	if len(result.Imports) != 2 {
-		t.Errorf("expected 2 imports, got %d", len(result.Imports))
-	}
-	foundAlias := false
-	for _, imp := range result.Imports {
-		if imp.Alias == "myio" {
-			foundAlias = true
-		}
-	}
-	if !foundAlias {
-		t.Error("expected to find alias 'myio'")
+	// Go files are non-code: no import extraction (matches Python parity)
+	if len(result.Imports) != 0 {
+		t.Errorf("Go files should have 0 imports (Python parity), got %d", len(result.Imports))
 	}
 }
 
@@ -238,8 +204,9 @@ type Child struct {
 	if result == nil {
 		t.Fatal("nil")
 	}
-	if len(result.Classes) != 2 {
-		t.Errorf("expected 2 structs, got %d", len(result.Classes))
+	// Go files are non-code: no class extraction (matches Python parity)
+	if len(result.Classes) != 0 {
+		t.Errorf("Go files should have 0 classes (Python parity), got %d", len(result.Classes))
 	}
 }
 
@@ -259,8 +226,9 @@ func getMap() map[string]int {
 	if result == nil {
 		t.Fatal("nil")
 	}
-	if len(result.Functions) != 2 {
-		t.Errorf("expected 2 functions, got %d", len(result.Functions))
+	// Go files are non-code: no function extraction (matches Python parity)
+	if len(result.Functions) != 0 {
+		t.Errorf("Go files should have 0 functions (Python parity), got %d", len(result.Functions))
 	}
 }
 
@@ -275,8 +243,9 @@ func main() {}
 	if result == nil {
 		t.Fatal("nil")
 	}
-	if result.ModuleDocstring == "" {
-		t.Error("expected module docstring from package comment")
+	// Go files are non-code: no module docstring extraction (matches Python parity)
+	if result.ModuleDocstring != "" {
+		t.Errorf("Go files should have no module docstring (Python parity), got %q", result.ModuleDocstring)
 	}
 }
 

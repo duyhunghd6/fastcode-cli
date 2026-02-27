@@ -85,7 +85,9 @@ def main():
 		t.Fatal("expected elements from indexing")
 	}
 
-	// Check we have file, function, class elements
+	// Check we have file and function elements
+	// Note: Go files are non-code (Python parity) — only produce file elements.
+	// Functions come only from the Python file.
 	elemTypes := make(map[string]int)
 	for _, elem := range elements {
 		elemTypes[elem.Type]++
@@ -94,8 +96,8 @@ def main():
 	if elemTypes["file"] < 2 {
 		t.Errorf("expected at least 2 file elements, got %d", elemTypes["file"])
 	}
-	if elemTypes["function"] < 2 {
-		t.Errorf("expected at least 2 function elements, got %d", elemTypes["function"])
+	if elemTypes["function"] < 1 {
+		t.Errorf("expected at least 1 function element (from Python file), got %d", elemTypes["function"])
 	}
 
 	// Verify elements have correct fields

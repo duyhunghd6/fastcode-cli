@@ -38,6 +38,11 @@ func (idx *Indexer) IndexRepository(repo *loader.Repository) ([]types.CodeElemen
 			continue
 		}
 
+		// Skip empty files (matches Python's `if not c: continue`)
+		if content == "" {
+			continue
+		}
+
 		parseResult := idx.parser.ParseFile(fi.Path, content)
 		if parseResult == nil {
 			continue

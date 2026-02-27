@@ -19,8 +19,9 @@ func TestNodeText(t *testing.T) {
 
 	// Since nodeText takes an interface, we test it through ParseFile
 	// which uses it internally. We test it indirectly.
+	// Go files are non-code (Python parity) — test with Python instead
 	p := New()
-	result := p.ParseFile("test.go", "package main\nfunc hello() {}\n")
+	result := p.ParseFile("test.py", "def hello():\n    pass\n")
 	if result == nil {
 		t.Fatal("nil")
 	}
@@ -140,8 +141,9 @@ func main() {
 	if result == nil {
 		t.Fatal("nil")
 	}
-	if len(result.Imports) < 3 {
-		t.Errorf("expected at least 3 imports, got %d", len(result.Imports))
+	// Go files are non-code (Python parity): no import extraction
+	if len(result.Imports) != 0 {
+		t.Errorf("Go files should have 0 imports (Python parity), got %d", len(result.Imports))
 	}
 }
 
@@ -296,20 +298,9 @@ func (c *Cache) Set(key, value string) {
 	if result == nil {
 		t.Fatal("nil")
 	}
-	methodCount := 0
-	for _, fn := range result.Functions {
-		if fn.IsMethod && fn.ClassName == "Cache" {
-			methodCount++
-		}
-	}
-	if methodCount != 2 {
-		t.Errorf("expected 2 methods on Cache, got %d", methodCount)
-	}
-	// Check receiver is set
-	for _, fn := range result.Functions {
-		if fn.IsMethod && fn.Receiver == "" {
-			t.Errorf("method %q should have receiver set", fn.Name)
-		}
+	// Go files are non-code (Python parity): no function extraction
+	if len(result.Functions) != 0 {
+		t.Errorf("Go files should have 0 functions (Python parity), got %d", len(result.Functions))
 	}
 }
 
@@ -329,8 +320,9 @@ func divide(a, b int) (int, error) {
 	if result == nil {
 		t.Fatal("nil")
 	}
-	if len(result.Functions) != 1 {
-		t.Errorf("expected 1 function, got %d", len(result.Functions))
+	// Go files are non-code (Python parity): no function extraction
+	if len(result.Functions) != 0 {
+		t.Errorf("Go files should have 0 functions (Python parity), got %d", len(result.Functions))
 	}
 }
 

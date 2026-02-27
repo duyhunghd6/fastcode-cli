@@ -106,8 +106,9 @@ func main() {
 	if result == nil {
 		t.Fatal("expected parse result")
 	}
-	if len(result.Imports) != 1 {
-		t.Errorf("expected 1 import, got %d", len(result.Imports))
+	// Go files are non-code (Python parity): no import extraction
+	if len(result.Imports) != 0 {
+		t.Errorf("Go files should have 0 imports (Python parity), got %d", len(result.Imports))
 	}
 }
 
@@ -133,15 +134,9 @@ func (c *Config) Set(v string) {
 		t.Fatal("expected parse result")
 	}
 
-	methods := 0
-	for _, fn := range result.Functions {
-		if fn.IsMethod && fn.ClassName == "Config" {
-			methods++
-			t.Logf("method %s receiver=%s", fn.Name, fn.ClassName)
-		}
-	}
-	if methods != 2 {
-		t.Errorf("expected 2 methods, got %d", methods)
+	// Go files are non-code (Python parity): no function extraction
+	if len(result.Functions) != 0 {
+		t.Errorf("Go files should have 0 functions (Python parity), got %d", len(result.Functions))
 	}
 }
 

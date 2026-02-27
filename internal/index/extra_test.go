@@ -37,9 +37,9 @@ func TestIndexRepositorySkipUnreadable(t *testing.T) {
 	if err != nil {
 		t.Fatalf("IndexRepository: %v", err)
 	}
-	// Should have at least elements from main.go (file + function)
-	if len(elements) < 2 {
-		t.Errorf("expected at least 2 elements, got %d", len(elements))
+	// Go files are non-code: only file-level element from main.go
+	if len(elements) < 1 {
+		t.Errorf("expected at least 1 element (file-level from main.go), got %d", len(elements))
 	}
 }
 
@@ -66,9 +66,9 @@ func TestIndexRepositoryNonCodeFile(t *testing.T) {
 	if err != nil {
 		t.Fatalf("IndexRepository: %v", err)
 	}
-	// Should have elements from both files: main.go (file + function) + README.md (file)
-	if len(elements) < 3 {
-		t.Errorf("expected at least 3 elements (including README.md file element), got %d", len(elements))
+	// Go files are non-code: main.go (1 file element) + README.md (1 file element) = 2
+	if len(elements) < 2 {
+		t.Errorf("expected at least 2 elements (main.go file + README.md file), got %d", len(elements))
 	}
 	// Verify README.md is indexed as a file-level element
 	foundMD := false

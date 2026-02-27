@@ -107,8 +107,9 @@ func helper() string {
 	if result.TotalFiles < 2 {
 		t.Errorf("TotalFiles = %d, want >= 2", result.TotalFiles)
 	}
-	if result.TotalElements < 4 {
-		t.Errorf("TotalElements = %d, want >= 4", result.TotalElements)
+	// Go files are non-code (Python parity): main.go=1 file element, app.py=1 file + 1 function = 3
+	if result.TotalElements < 3 {
+		t.Errorf("TotalElements = %d, want >= 3", result.TotalElements)
 	}
 	if result.Cached {
 		t.Error("first index should not be cached")

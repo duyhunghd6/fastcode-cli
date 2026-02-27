@@ -51,21 +51,9 @@ type Reader interface {
 		t.Fatal("expected parse result")
 	}
 
-	found := false
-	for _, cls := range result.Classes {
-		if cls.Name == "Reader" {
-			found = true
-			if cls.Kind != "interface" {
-				t.Errorf("kind = %q, want interface", cls.Kind)
-			}
-			// Methods should be extracted
-			if len(cls.Methods) < 1 {
-				t.Logf("warning: interface methods not extracted (may depend on tree-sitter grammar version), got %d", len(cls.Methods))
-			}
-		}
-	}
-	if !found {
-		t.Error("Reader interface not found")
+	// Go files are non-code (Python parity): no class extraction
+	if len(result.Classes) != 0 {
+		t.Errorf("Go files should have 0 classes (Python parity), got %d", len(result.Classes))
 	}
 }
 
@@ -81,17 +69,9 @@ type Empty interface{}
 		t.Fatal("expected parse result")
 	}
 
-	found := false
-	for _, cls := range result.Classes {
-		if cls.Name == "Empty" {
-			found = true
-			if len(cls.Methods) != 0 {
-				t.Errorf("empty interface should have 0 methods, got %d", len(cls.Methods))
-			}
-		}
-	}
-	if !found {
-		t.Error("Empty interface not found")
+	// Go files are non-code (Python parity): no class extraction
+	if len(result.Classes) != 0 {
+		t.Errorf("Go files should have 0 classes (Python parity), got %d", len(result.Classes))
 	}
 }
 
@@ -143,15 +123,9 @@ func (h *Handler) SetName(n string) {
 		t.Fatal("expected parse result")
 	}
 
-	// Should find both methods
-	methodCount := 0
-	for _, fn := range result.Functions {
-		if fn.IsMethod && fn.ClassName == "Handler" {
-			methodCount++
-		}
-	}
-	if methodCount < 2 {
-		t.Errorf("expected at least 2 methods on Handler, got %d", methodCount)
+	// Go files are non-code (Python parity): no function extraction
+	if len(result.Functions) != 0 {
+		t.Errorf("Go files should have 0 functions (Python parity), got %d", len(result.Functions))
 	}
 }
 

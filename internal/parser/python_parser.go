@@ -7,17 +7,30 @@ import (
 	sitter "github.com/smacker/go-tree-sitter"
 )
 
+// maxFunctionLines matches Python's CodeParser.max_function_lines — functions
+// longer than this are skipped to avoid polluting the index with mega-functions.
+const maxFunctionLines = 1000
+
 // parsePython extracts classes, functions, and imports from Python source.
 func parsePython(root *sitter.Node, code []byte, result *types.FileParseResult) {
-	// Extract module docstring
-	if root.ChildCount() > 0 {
-		first := root.Child(0)
-		if first.Type() == "expression_statement" && first.ChildCount() > 0 {
-			expr := first.Child(0)
+	// Extract module docstring — scan past any leading comment nodes (e.g. shebangs)
+	// Python files may start with #!/usr/bin/env python3 which becomes a comment node
+	maxDocScan := int(root.ChildCount())
+	if maxDocScan > 15 {
+		maxDocScan = 15 // only check first 15 children
+	}
+	for i := 0; i < maxDocScan; i++ {
+		child := root.Child(i)
+		if child.Type() == "comment" {
+			continue // skip shebangs and comments
+		}
+		if child.Type() == "expression_statement" && child.ChildCount() > 0 {
+			expr := child.Child(0)
 			if expr.Type() == "string" {
 				result.ModuleDocstring = cleanPythonDocstring(expr.Content(code))
 			}
 		}
+		break // stop at first non-comment node
 	}
 
 	for i := 0; i < int(root.ChildCount()); i++ {
@@ -143,9 +156,17 @@ func extractPythonClass(node *sitter.Node, code []byte) types.ClassInfo {
 }
 
 func extractPythonFunction(node *sitter.Node, code []byte, className string) types.FunctionInfo {
+	startLine := int(node.StartPoint().Row) + 1
+	endLine := int(node.EndPoint().Row) + 1
+
+	// Skip functions longer than maxFunctionLines (matches Python's parser behavior)
+	if endLine-startLine > maxFunctionLines {
+		return types.FunctionInfo{} // empty — caller checks fn.Name != ""
+	}
+
 	fn := types.FunctionInfo{
-		StartLine: int(node.StartPoint().Row) + 1,
-		EndLine:   int(node.EndPoint().Row) + 1,
+		StartLine: startLine,
+		EndLine:   endLine,
 		ClassName: className,
 		IsMethod:  className != "",
 	}
