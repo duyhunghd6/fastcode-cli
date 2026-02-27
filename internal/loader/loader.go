@@ -223,9 +223,17 @@ func matchGitignorePattern(pattern, path string) bool {
 
 	// Directory-only patterns should only match directories
 	if dirOnly && !isDir {
-		// Match files INSIDE the directory
+		// Match files INSIDE the directory at any depth
+		// e.g., pattern "perf/" should match "docs/perf/baseline.md"
 		if strings.HasPrefix(cleanPath, cleanPattern+"/") || cleanPath == cleanPattern {
 			return true
+		}
+		// Check if any path component matches the pattern (basename-level matching)
+		// e.g., "perf/" matches "docs/perf/file.md" because "perf" appears as a dir component
+		if !strings.Contains(cleanPattern, "/") {
+			if strings.Contains(cleanPath, "/"+cleanPattern+"/") || strings.HasPrefix(cleanPath, cleanPattern+"/") {
+				return true
+			}
 		}
 		return false
 	}
@@ -252,6 +260,18 @@ func matchGitignorePattern(pattern, path string) bool {
 		}
 		// Path is inside the pattern directory
 		if strings.HasPrefix(cleanPath, cleanPattern+"/") {
+			return true
+		}
+	}
+
+	// 4. Patterns without "/" are basename-level: match any path component
+	//    e.g., "thirdparty" matches "thirdparty/CMakeLists.txt" and "src/thirdparty/foo.h"
+	if !strings.Contains(cleanPattern, "/") && !strings.ContainsAny(cleanPattern, "*?[") {
+		// Check if the pattern matches as a directory component in the path
+		if strings.HasPrefix(cleanPath, cleanPattern+"/") {
+			return true
+		}
+		if strings.Contains(cleanPath, "/"+cleanPattern+"/") {
 			return true
 		}
 	}

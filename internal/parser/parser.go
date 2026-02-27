@@ -63,7 +63,7 @@ func (p *Parser) ParseFile(filePath, content string) *types.FileParseResult {
 	case "rust":
 		parseRust(rootNode, code, result)
 	case "c", "cpp":
-		parseC(rootNode, code, result)
+		parseC(rootNode, code, result, language)
 	default:
 		// Fallback for code languages without a dedicated parser
 	}
