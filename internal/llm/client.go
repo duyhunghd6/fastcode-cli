@@ -7,9 +7,14 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"path/filepath"
 	"strings"
+	"sync/atomic"
 	"time"
 )
+
+// debugCallCounter tracks the number of LLM calls for FASTCODE_DEBUG_PROMPT_DIR logging.
+var debugCallCounter uint64
 
 // Client is an OpenAI-compatible LLM API client.
 type Client struct {
@@ -83,13 +88,26 @@ func (c *Client) ChatCompletion(messages []ChatMessage, temperature float64, max
 		MaxTokens:   maxTokens,
 	}
 
-	// Dump prompt if debug file is set and exit early
+	// --- Mode 1: Single-prompt abort (existing behaviour) ---
 	if dumpFile := os.Getenv("FASTCODE_DEBUG_PROMPT_FILE"); dumpFile != "" {
 		data, err := json.MarshalIndent(req, "", "  ")
 		if err == nil {
 			_ = os.WriteFile(dumpFile, data, 0644)
 		}
 		return "DEBUG_PROMPT_WRITTEN", nil
+	}
+
+	// --- Mode 2: Full-flow logging (log every call, don't abort) ---
+	dumpDir := os.Getenv("FASTCODE_DEBUG_PROMPT_DIR")
+	var callNum uint64
+	if dumpDir != "" {
+		callNum = atomic.AddUint64(&debugCallCounter, 1)
+		_ = os.MkdirAll(dumpDir, 0755)
+		reqPath := filepath.Join(dumpDir, fmt.Sprintf("call_%03d_request.json", callNum))
+		data, err := json.MarshalIndent(req, "", "  ")
+		if err == nil {
+			_ = os.WriteFile(reqPath, data, 0644)
+		}
 	}
 
 	body, err := c.post("/chat/completions", req)
@@ -106,6 +124,15 @@ func (c *Client) ChatCompletion(messages []ChatMessage, temperature float64, max
 	}
 	if len(resp.Choices) == 0 {
 		return "", fmt.Errorf("no choices in response")
+	}
+
+	// Log response in full-flow mode
+	if dumpDir != "" {
+		respPath := filepath.Join(dumpDir, fmt.Sprintf("call_%03d_response.json", callNum))
+		respData, err := json.MarshalIndent(resp, "", "  ")
+		if err == nil {
+			_ = os.WriteFile(respPath, respData, 0644)
+		}
 	}
 
 	return resp.Choices[0].Message.Content, nil

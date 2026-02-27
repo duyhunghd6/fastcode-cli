@@ -21,11 +21,11 @@ func NewAnswerGenerator(client *llm.Client) *AnswerGenerator {
 // GenerateAnswer produces a natural-language answer given the query and retrieved context.
 func (ag *AnswerGenerator) GenerateAnswer(query string, pq *ProcessedQuery, elements []types.CodeElement) (string, error) {
 	prompt := ag.buildPrompt(query, pq, elements)
-	fullPrompt := fmt.Sprintf("%s\n\n%s", answerSystemPrompt(), prompt)
 
 	answer, err := ag.client.ChatCompletion([]llm.ChatMessage{
-		{Role: "user", Content: fullPrompt},
-	}, 0.3, 4000)
+		{Role: "system", Content: answerSystemPrompt()},
+		{Role: "user", Content: prompt},
+	}, 0.2, 8000)
 	if err != nil {
 		return "", fmt.Errorf("generate answer: %w", err)
 	}

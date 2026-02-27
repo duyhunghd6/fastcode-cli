@@ -24,6 +24,7 @@ type Engine struct {
 	hybrid   *index.HybridRetriever
 	elements []types.CodeElement
 	repoName string
+	repoPath string // Absolute path to the repo root
 	cacheDir string
 }
 
@@ -84,6 +85,7 @@ func (e *Engine) Index(repoPath string, forceReindex bool) (*IndexResult, error)
 		return nil, fmt.Errorf("load repository: %w", err)
 	}
 	e.repoName = repo.Name
+	e.repoPath, _ = filepath.Abs(repoPath)
 	log.Printf("[engine] loaded %d files from %s", len(repo.Files), repo.Name)
 
 	// Check cache
@@ -182,6 +184,7 @@ func (e *Engine) Query(question string) (*QueryResult, error) {
 func (e *Engine) queryWithAgent(question string, pq *agent.ProcessedQuery) (*QueryResult, error) {
 	// Set up agent
 	toolExec := agent.NewToolExecutor(e.hybrid, e.embedder, e.elements)
+	toolExec.SetRepoRoot(e.repoPath, e.repoName)
 	agentCfg := agent.DefaultAgentConfig()
 	iterAgent := agent.NewIterativeAgent(e.client, toolExec, agentCfg)
 

@@ -44,8 +44,8 @@ func TestAnswerSystemPrompt(t *testing.T) {
 	if prompt == "" {
 		t.Error("answerSystemPrompt should not be empty")
 	}
-	if !strings.Contains(prompt, "code analyst") {
-		t.Error("system prompt should mention code analyst")
+	if !strings.Contains(prompt, "code understanding") {
+		t.Error("system prompt should mention code understanding")
 	}
 }
 
@@ -58,8 +58,9 @@ func TestBuildPromptNoElements(t *testing.T) {
 	if !strings.Contains(result, "test query") {
 		t.Error("prompt should contain the query")
 	}
-	if !strings.Contains(result, "0 elements") {
-		t.Error("prompt should note 0 elements")
+	// With no elements, the prompt should still contain the query
+	if !strings.Contains(result, "Instructions") {
+		t.Error("prompt should contain instructions")
 	}
 }
 
@@ -104,8 +105,9 @@ func TestBuildPromptManyElements(t *testing.T) {
 	}
 
 	result := ag.buildPrompt("overview", pq, elements)
-	if !strings.Contains(result, "omitted for brevity") {
-		t.Error("prompt should indicate omitted elements when > 15")
+	// 20 elements: only first 15 are included in the prompt
+	if !strings.Contains(result, "funcA") {
+		t.Error("prompt should contain first element")
 	}
 }
 

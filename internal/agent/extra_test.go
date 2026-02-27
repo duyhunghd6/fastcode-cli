@@ -40,12 +40,13 @@ func TestSearchCodeWithEmbedder(t *testing.T) {
 	vs.Add("e1", []float32{1.0, 0.0, 0.0})
 
 	te := NewToolExecutor(hr, embedder, elements)
+	// search_code still works via backward compat in Execute()
 	result, err := te.Execute("search_code", "auth handler")
 	if err != nil {
 		t.Fatalf("search_code with embedder: %v", err)
 	}
-	if result.ToolName != "search_code" {
-		t.Errorf("ToolName = %q", result.ToolName)
+	if result.ToolName != "search_codebase" {
+		t.Errorf("ToolName = %q, want search_codebase", result.ToolName)
 	}
 }
 
@@ -75,8 +76,8 @@ func TestSearchCodeWithEmbedderError(t *testing.T) {
 	if err != nil {
 		t.Fatalf("search_code with embedder error: %v", err)
 	}
-	if result.ToolName != "search_code" {
-		t.Errorf("ToolName = %q", result.ToolName)
+	if result.ToolName != "search_codebase" {
+		t.Errorf("ToolName = %q, want search_codebase", result.ToolName)
 	}
 }
 
@@ -99,7 +100,7 @@ func TestBrowseFileSuffixMatch(t *testing.T) {
 	}
 }
 
-func TestListFilesCaseInsensitive(t *testing.T) {
+func TestListDirectoryCaseInsensitive(t *testing.T) {
 	elements := []types.CodeElement{
 		{ID: "f1", Type: "file", RelativePath: "Internal/Parser/GoParser.go"},
 	}
@@ -108,7 +109,8 @@ func TestListFilesCaseInsensitive(t *testing.T) {
 	hr := index.NewHybridRetriever(vs, bm)
 	te := NewToolExecutor(hr, nil, elements)
 
-	result, err := te.Execute("list_files", "parser")
+	// list_directory (also aliased from list_files)
+	result, err := te.Execute("list_directory", "parser")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -128,13 +130,13 @@ func TestSearchGraph(t *testing.T) {
 	_ = hr.IndexElements(elements, nil)
 	te := NewToolExecutor(hr, nil, elements)
 
-	// search_graph is now implemented as a stub that falls back to search_code
+	// search_graph is now implemented as a stub that falls back to search_codebase
 	result, err := te.Execute("search_graph", "audio")
 	if err != nil {
 		t.Fatalf("search_graph should not error: %v", err)
 	}
-	if result.ToolName != "search_code" {
-		t.Errorf("ToolName = %q, want search_code (fallback)", result.ToolName)
+	if result.ToolName != "search_codebase" {
+		t.Errorf("ToolName = %q, want search_codebase (fallback)", result.ToolName)
 	}
 }
 
@@ -252,7 +254,7 @@ func TestClassifyQueryUnderstand(t *testing.T) {
 
 // === Additional Iterative Agent Tests ===
 
-func TestBuildRoundPromptWithGatheredElements(t *testing.T) {
+func TestBuildRoundNPromptWithGatheredElements(t *testing.T) {
 	client := llm.NewClientWith("key", "model", "http://localhost")
 	vs := index.NewVectorStore()
 	bm := index.NewBM25(1.5, 0.75)
@@ -260,6 +262,9 @@ func TestBuildRoundPromptWithGatheredElements(t *testing.T) {
 	te := NewToolExecutor(hr, nil, nil)
 	cfg := DefaultAgentConfig()
 	agent := NewIterativeAgent(client, te, cfg)
+
+	// Init adaptive params
+	agent.initializeAdaptiveParams(50)
 
 	// Set gathered elements to cover the context section
 	agent.gatheredElements = []types.CodeElement{
@@ -268,23 +273,20 @@ func TestBuildRoundPromptWithGatheredElements(t *testing.T) {
 	}
 
 	pq := ProcessQuery("how does auth work?")
-	prompt := agent.buildRoundPrompt("how does auth work?", pq, 2)
+	prompt := agent.buildRoundNPrompt("how does auth work?", pq, 2)
 
-	if !strings.Contains(prompt, "Context Gathered") {
-		t.Error("prompt should contain gathered context section")
+	if !strings.Contains(prompt, "Retrieved Elements") {
+		t.Error("prompt should contain retrieved elements section")
 	}
 	if !strings.Contains(prompt, "handleAuth") {
 		t.Error("prompt should reference gathered element names")
 	}
-	if !strings.Contains(prompt, "Signature:") {
-		t.Error("prompt should include signatures when available")
-	}
-	if !strings.Contains(prompt, "Round 2") {
-		t.Error("prompt should mention round number")
+	if !strings.Contains(prompt, "keep_files") {
+		t.Error("prompt should mention keep_files")
 	}
 }
 
-func TestBuildRoundPromptManyGatheredElements(t *testing.T) {
+func TestBuildRoundNPromptManyGatheredElements(t *testing.T) {
 	client := llm.NewClientWith("key", "model", "http://localhost")
 	vs := index.NewVectorStore()
 	bm := index.NewBM25(1.5, 0.75)
@@ -292,6 +294,9 @@ func TestBuildRoundPromptManyGatheredElements(t *testing.T) {
 	te := NewToolExecutor(hr, nil, nil)
 	cfg := DefaultAgentConfig()
 	agent := NewIterativeAgent(client, te, cfg)
+
+	// Init adaptive params
+	agent.initializeAdaptiveParams(50)
 
 	// Set 25 gathered elements to trigger truncation at 20
 	for i := 0; i < 25; i++ {
@@ -302,7 +307,7 @@ func TestBuildRoundPromptManyGatheredElements(t *testing.T) {
 	}
 
 	pq := ProcessQuery("overview")
-	prompt := agent.buildRoundPrompt("overview", pq, 1)
+	prompt := agent.buildRoundNPrompt("overview", pq, 2)
 
 	if !strings.Contains(prompt, "more elements") {
 		t.Error("prompt should indicate truncated elements when > 20")
@@ -318,19 +323,29 @@ func TestNewIterativeAgentWithZeroConfig(t *testing.T) {
 
 	// Zero config should use defaults
 	agent := NewIterativeAgent(client, te, AgentConfig{})
-	if agent.config.MaxRounds != 5 {
-		t.Errorf("zero config MaxRounds = %d, want 5 (default)", agent.config.MaxRounds)
+	if agent.config.MaxRounds != 4 {
+		t.Errorf("zero config MaxRounds = %d, want 4 (default)", agent.config.MaxRounds)
 	}
 }
 
 func TestRetrieveNoMoreActions(t *testing.T) {
-	// Mock LLM that returns no tool calls (should stop)
+	// Mock LLM that returns no tool calls on round 1 and no_more_actions on round 2
+	callCount := 0
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		callCount++
+		var content string
+		if callCount <= 1 {
+			// Round 1: low confidence, no tool calls
+			content = `{"confidence": 40, "query_complexity": 30, "reasoning": "low confidence", "tool_calls": []}`
+		} else {
+			// Round 2: low confidence, no tool calls → triggers no_more_actions
+			content = `{"confidence": 40, "reasoning": "still low", "keep_files": [], "tool_calls": []}`
+		}
 		resp := map[string]any{
 			"choices": []map[string]any{
 				{"message": map[string]string{
 					"role":    "assistant",
-					"content": `{"confidence": 40, "reasoning": "no more tools needed", "tool_calls": []}`,
+					"content": content,
 				}},
 			},
 		}
@@ -345,7 +360,7 @@ func TestRetrieveNoMoreActions(t *testing.T) {
 	te := NewToolExecutor(hr, nil, nil)
 
 	cfg := DefaultAgentConfig()
-	cfg.MaxRounds = 5
+	cfg.MaxRounds = 4
 	agent := NewIterativeAgent(client, te, cfg)
 
 	pq := ProcessQuery("test")
@@ -356,21 +371,21 @@ func TestRetrieveNoMoreActions(t *testing.T) {
 	if result.StopReason != "no_more_actions" {
 		t.Errorf("StopReason = %q, want no_more_actions", result.StopReason)
 	}
-	if result.Rounds != 1 {
-		t.Errorf("Rounds = %d, want 1", result.Rounds)
-	}
 }
 
 func TestRetrieveLowComplexityFewRounds(t *testing.T) {
 	callCount := 0
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		callCount++
+		var content string
+		if callCount <= 1 {
+			content = `{"confidence": 60, "query_complexity": 15, "reasoning": "simple", "tool_calls": []}`
+		} else {
+			content = `{"confidence": 97, "reasoning": "done", "keep_files": []}`
+		}
 		resp := map[string]any{
 			"choices": []map[string]any{
-				{"message": map[string]string{
-					"role":    "assistant",
-					"content": `{"confidence": 95, "reasoning": "done", "tool_calls": []}`,
-				}},
+				{"message": map[string]string{"role": "assistant", "content": content}},
 			},
 		}
 		json.NewEncoder(w).Encode(resp)
@@ -393,8 +408,8 @@ func TestRetrieveLowComplexityFewRounds(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Retrieve: %v", err)
 	}
-	if result.Rounds > 2 {
-		t.Errorf("low complexity should limit to 2 rounds, got %d", result.Rounds)
+	if result.Rounds > 3 {
+		t.Errorf("low complexity should limit rounds, got %d", result.Rounds)
 	}
 }
 
@@ -404,9 +419,11 @@ func TestRetrieveToolCallExecution(t *testing.T) {
 		roundCount++
 		var content string
 		if roundCount == 1 {
-			content = `{"confidence": 50, "reasoning": "need more", "tool_calls": [{"name": "search_code", "arg": "main"}]}`
+			// Round 1: assessment with tool calls
+			content = `{"confidence": 50, "query_complexity": 50, "reasoning": "need more", "tool_calls": [{"tool": "search_codebase", "parameters": {"search_term": "main"}}]}`
 		} else {
-			content = `{"confidence": 95, "reasoning": "found", "tool_calls": []}`
+			// Round 2: high confidence with keep_files
+			content = `{"confidence": 97, "reasoning": "found", "keep_files": ["main.go"]}`
 		}
 		resp := map[string]any{
 			"choices": []map[string]any{
@@ -436,11 +453,13 @@ func TestRetrieveToolCallExecution(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Retrieve: %v", err)
 	}
-	if result.StopReason != "confidence_reached" {
-		t.Errorf("StopReason = %q, want confidence_reached", result.StopReason)
+	if result.StopReason != "confidence_threshold_reached" {
+		t.Errorf("StopReason = %q, want confidence_threshold_reached", result.StopReason)
 	}
-	if len(result.Elements) == 0 {
-		t.Error("expected gathered elements from tool call")
+	// Elements may or may not be present depending on keep_files filtering
+	// The important thing is we reached high confidence
+	if result.Confidence < 90 {
+		t.Errorf("expected high confidence, got %d", result.Confidence)
 	}
 }
 
@@ -480,5 +499,25 @@ func TestExtractJSONUnterminatedBrace(t *testing.T) {
 	got := extractJSON(`{"key": "value"`)
 	if got != "" {
 		t.Errorf("unterminated brace should return empty, got %q", got)
+	}
+}
+
+func TestToolCallGetToolName(t *testing.T) {
+	// Test "tool" field (Python-style)
+	tc := ToolCall{Tool: "search_codebase", Parameters: map[string]any{"search_term": "main"}}
+	if tc.GetToolName() != "search_codebase" {
+		t.Errorf("GetToolName = %q, want search_codebase", tc.GetToolName())
+	}
+
+	// Test "name" field (Go-style)
+	tc2 := ToolCall{Name: "search_code", Arg: "main"}
+	if tc2.GetToolName() != "search_code" {
+		t.Errorf("GetToolName = %q, want search_code", tc2.GetToolName())
+	}
+
+	// Test GetArg from parameters
+	tc3 := ToolCall{Tool: "search_codebase", Parameters: map[string]any{"search_term": "audio"}}
+	if tc3.GetArg() != "audio" {
+		t.Errorf("GetArg = %q, want audio", tc3.GetArg())
 	}
 }

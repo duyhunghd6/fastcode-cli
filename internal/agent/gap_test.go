@@ -6,11 +6,11 @@ import (
 	"github.com/duyhunghd6/fastcode-cli/internal/types"
 )
 
-// === parseRoundResponse Tests ===
+// === parseRound1Response Tests ===
 
-func TestParseRoundResponseNoJSON(t *testing.T) {
+func TestParseRound1ResponseNoJSON(t *testing.T) {
 	ia := &IterativeAgent{}
-	result, err := ia.parseRoundResponse("This has no JSON at all, just text.", 1)
+	result, err := ia.parseRound1Response("This has no JSON at all, just text.")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -22,9 +22,9 @@ func TestParseRoundResponseNoJSON(t *testing.T) {
 	}
 }
 
-func TestParseRoundResponseInvalidJSONFallback(t *testing.T) {
+func TestParseRound1ResponseInvalidJSONFallback(t *testing.T) {
 	ia := &IterativeAgent{}
-	result, err := ia.parseRoundResponse(`{"confidence": "not_a_number"}`, 2)
+	result, err := ia.parseRound1Response(`{"confidence": "not_a_number"}`)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -33,9 +33,9 @@ func TestParseRoundResponseInvalidJSONFallback(t *testing.T) {
 	}
 }
 
-func TestParseRoundResponseValidJSONWithToolCalls(t *testing.T) {
+func TestParseRound1ResponseValidJSONWithToolCalls(t *testing.T) {
 	ia := &IterativeAgent{}
-	result, err := ia.parseRoundResponse(`{"confidence": 75, "reasoning": "Need more", "tool_calls": [{"name": "search", "arg": "main"}]}`, 1)
+	result, err := ia.parseRound1Response(`{"confidence": 75, "reasoning": "Need more", "tool_calls": [{"tool": "search_codebase", "parameters": {"search_term": "main"}}]}`)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -47,9 +47,9 @@ func TestParseRoundResponseValidJSONWithToolCalls(t *testing.T) {
 	}
 }
 
-func TestParseRoundResponseHighConfidence(t *testing.T) {
+func TestParseRound1ResponseHighConfidence(t *testing.T) {
 	ia := &IterativeAgent{}
-	result, err := ia.parseRoundResponse(`{"confidence": 95, "reasoning": "Fully answered"}`, 3)
+	result, err := ia.parseRound1Response(`{"confidence": 95, "reasoning": "Fully answered"}`)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -58,6 +58,20 @@ func TestParseRoundResponseHighConfidence(t *testing.T) {
 	}
 	if len(result.ToolCalls) != 0 {
 		t.Error("no tool calls expected")
+	}
+}
+
+func TestParseRoundNResponseKeepFiles(t *testing.T) {
+	ia := &IterativeAgent{}
+	result, err := ia.parseRoundNResponse(`{"confidence": 97, "reasoning": "sufficient", "keep_files": ["file1.go", "file2.go"]}`, 2)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if result.Confidence != 97 {
+		t.Errorf("confidence = %d, want 97", result.Confidence)
+	}
+	if len(result.KeepFiles) != 2 {
+		t.Errorf("keep_files = %d, want 2", len(result.KeepFiles))
 	}
 }
 
@@ -209,7 +223,7 @@ func TestClassifyQueryUnderstandType(t *testing.T) {
 	}
 }
 
-// === Min helper ===
+// === Min/Max helper ===
 
 func TestMinHelperFunc(t *testing.T) {
 	if min(3, 5) != 3 {
@@ -220,5 +234,66 @@ func TestMinHelperFunc(t *testing.T) {
 	}
 	if min(4, 4) != 4 {
 		t.Error("min(4,4) should be 4")
+	}
+}
+
+func TestMaxHelperFunc(t *testing.T) {
+	if max(3, 5) != 5 {
+		t.Error("max(3,5) should be 5")
+	}
+	if max(7, 2) != 7 {
+		t.Error("max(7,2) should be 7")
+	}
+}
+
+// === filterElementsByKeepFiles ===
+
+func TestFilterElementsByKeepFilesBasic(t *testing.T) {
+	ia := &IterativeAgent{}
+	elements := []types.CodeElement{
+		{ID: "e1", RelativePath: "src/audio.ts", RepoName: "repo"},
+		{ID: "e2", RelativePath: "src/other.ts", RepoName: "repo"},
+		{ID: "e3", RelativePath: "src/engine.ts", RepoName: "repo"},
+	}
+	keepFiles := []string{"src/audio.ts", "src/engine.ts"}
+	result := ia.filterElementsByKeepFiles(elements, keepFiles)
+	if len(result) != 2 {
+		t.Errorf("expected 2 kept, got %d", len(result))
+	}
+}
+
+func TestFilterElementsByKeepFilesEmpty(t *testing.T) {
+	ia := &IterativeAgent{}
+	elements := []types.CodeElement{
+		{ID: "e1", RelativePath: "src/audio.ts"},
+	}
+	// Empty keep_files should return all elements
+	result := ia.filterElementsByKeepFiles(elements, nil)
+	if len(result) != 1 {
+		t.Errorf("expected all 1, got %d", len(result))
+	}
+}
+
+// === Adaptive parameters ===
+
+func TestInitializeAdaptiveParamsSimple(t *testing.T) {
+	ia := &IterativeAgent{config: DefaultAgentConfig()}
+	ia.initializeAdaptiveParams(20) // simple query
+	if ia.confidenceThreshold != 95 {
+		t.Errorf("simple query threshold = %d, want 95", ia.confidenceThreshold)
+	}
+	if ia.adaptiveLineBudget > 8000 {
+		t.Errorf("simple query budget = %d, want <= 8000", ia.adaptiveLineBudget)
+	}
+}
+
+func TestInitializeAdaptiveParamsComplex(t *testing.T) {
+	ia := &IterativeAgent{config: DefaultAgentConfig()}
+	ia.initializeAdaptiveParams(85) // complex query
+	if ia.confidenceThreshold > 92 {
+		t.Errorf("complex query threshold = %d, want <= 92", ia.confidenceThreshold)
+	}
+	if ia.adaptiveLineBudget < 10000 {
+		t.Errorf("complex query budget = %d, want >= 10000", ia.adaptiveLineBudget)
 	}
 }

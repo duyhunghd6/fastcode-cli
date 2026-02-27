@@ -14,6 +14,8 @@ import (
 )
 
 var version = "0.1.0-dev"
+var buildTime = "unknown"
+var gitCommit = "unknown"
 
 func main() {
 	// Load global config from ~/.fastcode/config.yaml first
@@ -31,13 +33,15 @@ func main() {
 
 // buildRootCmd creates the root cobra command with all subcommands.
 func buildRootCmd() *cobra.Command {
+	versionStr := fmt.Sprintf("%s (built: %s, commit: %s)", version, buildTime, gitCommit)
+
 	rootCmd := &cobra.Command{
 		Use:   "fastcode",
 		Short: "⚡ FastCode-CLI — Codebase Intelligence Engine",
 		Long: `FastCode-CLI is a Go-based code understanding tool that combines
 AST parsing, graph analysis, BM25 keyword search, vector embeddings,
 and LLM-powered iterative retrieval to answer questions about codebases.`,
-		Version: version,
+		Version: versionStr,
 	}
 
 	// Shared flags

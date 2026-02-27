@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"github.com/duyhunghd6/fastcode-cli/internal/index"
@@ -41,13 +42,6 @@ func TestNewIterativeAgent(t *testing.T) {
 	}
 }
 
-func TestSystemPrompt(t *testing.T) {
-	prompt := systemPrompt()
-	if prompt == "" {
-		t.Error("systemPrompt should not be empty")
-	}
-}
-
 func TestMinFunc(t *testing.T) {
 	if min(3, 5) != 3 {
 		t.Error("min(3,5) should be 3")
@@ -60,7 +54,7 @@ func TestMinFunc(t *testing.T) {
 	}
 }
 
-func TestParseRoundResponseValidJSON(t *testing.T) {
+func TestParseRound1ResponseValidJSON(t *testing.T) {
 	client := llm.NewClientWith("key", "model", "http://localhost")
 	vs := index.NewVectorStore()
 	bm := index.NewBM25(1.5, 0.75)
@@ -69,10 +63,10 @@ func TestParseRoundResponseValidJSON(t *testing.T) {
 	cfg := DefaultAgentConfig()
 	agent := NewIterativeAgent(client, te, cfg)
 
-	response := `{"confidence": 85, "reasoning": "Found the handler", "tool_calls": [{"name": "search_code", "arg": "auth handler"}]}`
-	result, err := agent.parseRoundResponse(response, 1)
+	response := `{"confidence": 85, "reasoning": "Found the handler", "query_complexity": 45, "tool_calls": [{"tool": "search_codebase", "parameters": {"search_term": "auth handler"}}]}`
+	result, err := agent.parseRound1Response(response)
 	if err != nil {
-		t.Fatalf("parseRoundResponse error: %v", err)
+		t.Fatalf("parseRound1Response error: %v", err)
 	}
 	if result.Confidence != 85 {
 		t.Errorf("confidence = %d, want 85", result.Confidence)
@@ -83,9 +77,12 @@ func TestParseRoundResponseValidJSON(t *testing.T) {
 	if len(result.ToolCalls) != 1 {
 		t.Errorf("tool_calls = %d, want 1", len(result.ToolCalls))
 	}
+	if result.QueryComplexity != 45 {
+		t.Errorf("query_complexity = %d, want 45", result.QueryComplexity)
+	}
 }
 
-func TestParseRoundResponseCodeFence(t *testing.T) {
+func TestParseRound1ResponseCodeFence(t *testing.T) {
 	client := llm.NewClientWith("key", "model", "http://localhost")
 	vs := index.NewVectorStore()
 	bm := index.NewBM25(1.5, 0.75)
@@ -95,16 +92,16 @@ func TestParseRoundResponseCodeFence(t *testing.T) {
 	agent := NewIterativeAgent(client, te, cfg)
 
 	response := "Here is my response:\n```json\n{\"confidence\": 90, \"reasoning\": \"done\"}\n```"
-	result, err := agent.parseRoundResponse(response, 1)
+	result, err := agent.parseRound1Response(response)
 	if err != nil {
-		t.Fatalf("parseRoundResponse code fence error: %v", err)
+		t.Fatalf("parseRound1Response code fence error: %v", err)
 	}
 	if result.Confidence != 90 {
 		t.Errorf("confidence = %d, want 90", result.Confidence)
 	}
 }
 
-func TestParseRoundResponseBadJSON(t *testing.T) {
+func TestParseRound1ResponseBadJSON(t *testing.T) {
 	client := llm.NewClientWith("key", "model", "http://localhost")
 	vs := index.NewVectorStore()
 	bm := index.NewBM25(1.5, 0.75)
@@ -113,17 +110,16 @@ func TestParseRoundResponseBadJSON(t *testing.T) {
 	cfg := DefaultAgentConfig()
 	agent := NewIterativeAgent(client, te, cfg)
 
-	// parseRoundResponse gracefully handles bad JSON: returns confidence=90 fallback
-	result, err := agent.parseRoundResponse("this is not json at all", 1)
+	result, err := agent.parseRound1Response("this is not json at all")
 	if err != nil {
-		t.Fatalf("parseRoundResponse should not error on bad JSON: %v", err)
+		t.Fatalf("parseRound1Response should not error on bad JSON: %v", err)
 	}
 	if result.Confidence != 90 {
 		t.Errorf("expected fallback confidence 90, got %d", result.Confidence)
 	}
 }
 
-func TestBuildRoundPrompt(t *testing.T) {
+func TestBuildRound1Prompt(t *testing.T) {
 	client := llm.NewClientWith("key", "model", "http://localhost")
 	vs := index.NewVectorStore()
 	bm := index.NewBM25(1.5, 0.75)
@@ -133,20 +129,71 @@ func TestBuildRoundPrompt(t *testing.T) {
 	agent := NewIterativeAgent(client, te, cfg)
 
 	pq := ProcessQuery("how does auth work?")
-	prompt := agent.buildRoundPrompt("how does auth work?", pq, 1)
+	prompt := agent.buildRound1Prompt("how does auth work?", pq)
 	if prompt == "" {
 		t.Error("prompt should not be empty")
+	}
+	if !strings.Contains(prompt, "how does auth work?") {
+		t.Error("prompt should contain the query")
+	}
+	if !strings.Contains(prompt, "search_codebase") {
+		t.Error("prompt should mention search_codebase tool")
+	}
+	if !strings.Contains(prompt, "list_directory") {
+		t.Error("prompt should mention list_directory tool")
+	}
+}
+
+func TestBuildRoundNPrompt(t *testing.T) {
+	client := llm.NewClientWith("key", "model", "http://localhost")
+	vs := index.NewVectorStore()
+	bm := index.NewBM25(1.5, 0.75)
+	hr := index.NewHybridRetriever(vs, bm)
+	te := NewToolExecutor(hr, nil, nil)
+	cfg := DefaultAgentConfig()
+	agent := NewIterativeAgent(client, te, cfg)
+
+	// Init adaptive params for proper budget display
+	agent.initializeAdaptiveParams(50)
+
+	// Set gathered elements
+	agent.gatheredElements = []types.CodeElement{
+		{Type: "function", Name: "handleAuth", RelativePath: "auth.go", StartLine: 10, EndLine: 20, Signature: "func handleAuth()"},
+		{Type: "class", Name: "Server", RelativePath: "server.go", StartLine: 1, EndLine: 50},
+	}
+
+	pq := ProcessQuery("how does auth work?")
+	prompt := agent.buildRoundNPrompt("how does auth work?", pq, 2)
+	if prompt == "" {
+		t.Error("prompt should not be empty")
+	}
+	if !strings.Contains(prompt, "cost-aware") {
+		t.Error("round N prompt should contain cost-aware instructions")
+	}
+	if !strings.Contains(prompt, "keep_files") {
+		t.Error("round N prompt should mention keep_files")
+	}
+	if !strings.Contains(prompt, "handleAuth") {
+		t.Error("prompt should reference gathered element names")
 	}
 }
 
 func TestRetrieveHighConfidence(t *testing.T) {
-	// Mock LLM that returns high confidence immediately
+	// Mock LLM that returns high confidence
 	callCount := 0
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		callCount++
+		var content string
+		if callCount <= 1 {
+			// Round 1: assessment with tool calls
+			content = `{"confidence": 60, "query_complexity": 30, "reasoning": "need to search", "tool_calls": [{"tool": "search_codebase", "parameters": {"search_term": "main"}}]}`
+		} else {
+			// Round 2+: keep_files with high confidence
+			content = `{"confidence": 97, "reasoning": "Found everything needed", "keep_files": ["main.go"]}`
+		}
 		resp := map[string]any{
 			"choices": []map[string]any{
-				{"message": map[string]string{"role": "assistant", "content": `{"confidence": 95, "reasoning": "Found everything needed", "tool_calls": [{"name": "search_code", "arg": "main"}]}`}},
+				{"message": map[string]string{"role": "assistant", "content": content}},
 			},
 		}
 		json.NewEncoder(w).Encode(resp)
@@ -165,7 +212,7 @@ func TestRetrieveHighConfidence(t *testing.T) {
 	te := NewToolExecutor(hr, nil, elements)
 
 	cfg := DefaultAgentConfig()
-	cfg.MaxRounds = 2
+	cfg.MaxRounds = 3
 	agent := NewIterativeAgent(client, te, cfg)
 
 	pq := ProcessQuery("where is main?")

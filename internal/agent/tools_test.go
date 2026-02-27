@@ -19,7 +19,7 @@ func TestAvailableTools(t *testing.T) {
 			t.Errorf("tool %q has empty description", tool.Name)
 		}
 	}
-	for _, expected := range []string{"search_code", "browse_file", "skim_file", "list_files"} {
+	for _, expected := range []string{"search_codebase", "browse_file", "skim_file", "list_directory"} {
 		if !names[expected] {
 			t.Errorf("missing expected tool: %s", expected)
 		}
@@ -59,8 +59,8 @@ func TestToolExecutorSearchCode(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Execute: %v", err)
 	}
-	if result.ToolName != "search_code" {
-		t.Errorf("ToolName = %s, want search_code", result.ToolName)
+	if result.ToolName != "search_codebase" {
+		t.Errorf("ToolName = %s, want search_codebase", result.ToolName)
 	}
 }
 
