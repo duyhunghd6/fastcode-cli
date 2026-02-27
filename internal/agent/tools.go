@@ -11,6 +11,7 @@ import (
 
 	"github.com/duyhunghd6/fastcode-cli/internal/index"
 	"github.com/duyhunghd6/fastcode-cli/internal/llm"
+	"github.com/duyhunghd6/fastcode-cli/internal/logger"
 	"github.com/duyhunghd6/fastcode-cli/internal/types"
 )
 
@@ -114,7 +115,7 @@ func (te *ToolExecutor) ExecuteSearchCodebase(searchTerm, filePattern string, us
 	if useRegex {
 		compiled, err := regexp.Compile(flags + searchTerm)
 		if err != nil {
-			log.Printf("[tools] invalid regex: %v", err)
+			logger.Debugf("[tools] invalid regex: %v", err)
 			return nil
 		}
 		contentPattern = compiled
@@ -143,7 +144,7 @@ func (te *ToolExecutor) ExecuteSearchCodebase(searchTerm, filePattern string, us
 	var candidates []FileCandidate
 	maxResults := 30
 
-	log.Printf("[tools] Starting WalkDir for term=%q", searchTerm)
+	logger.Debugf("[tools] Starting WalkDir for term=%q", searchTerm)
 	_ = filepath.WalkDir(te.repoRoot, func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
 			return nil // skip errors
@@ -222,7 +223,7 @@ func (te *ToolExecutor) ExecuteSearchCodebase(searchTerm, filePattern string, us
 		return nil
 	})
 
-	log.Printf("[tools] Finished WalkDir for term=%q with %d candidates", searchTerm, len(candidates))
+	logger.Debugf("[tools] Finished WalkDir for term=%q with %d candidates", searchTerm, len(candidates))
 	return candidates
 }
 

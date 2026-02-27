@@ -2,7 +2,6 @@ package orchestrator
 
 import (
 	"fmt"
-	"log"
 	"os"
 	"path/filepath"
 
@@ -12,6 +11,7 @@ import (
 	"github.com/duyhunghd6/fastcode-cli/internal/index"
 	"github.com/duyhunghd6/fastcode-cli/internal/llm"
 	"github.com/duyhunghd6/fastcode-cli/internal/loader"
+	"github.com/duyhunghd6/fastcode-cli/internal/logger"
 	"github.com/duyhunghd6/fastcode-cli/internal/types"
 )
 
@@ -86,13 +86,13 @@ func (e *Engine) Index(repoPath string, forceReindex bool) (*IndexResult, error)
 	}
 	e.repoName = repo.Name
 	e.repoPath, _ = filepath.Abs(repoPath)
-	log.Printf("[engine] loaded %d files from %s", len(repo.Files), repo.Name)
+	logger.Debugf("[engine] loaded %d files from %s", len(repo.Files), repo.Name)
 
 	// Check cache
 	if !forceReindex && e.cache.Exists(repo.Name) {
 		cached, err := e.cache.Load(repo.Name)
 		if err == nil {
-			log.Printf("[engine] loaded %d elements from cache", len(cached.Elements))
+			logger.Debugf("[engine] loaded %d elements from cache", len(cached.Elements))
 			e.elements = cached.Elements
 			e.rebuildFromCache(cached)
 			return &IndexResult{
@@ -103,7 +103,7 @@ func (e *Engine) Index(repoPath string, forceReindex bool) (*IndexResult, error)
 				Cached:        true,
 			}, nil
 		}
-		log.Printf("[engine] cache load failed, re-indexing: %v", err)
+		logger.Debugf("[engine] cache load failed, re-indexing: %v", err)
 	}
 
 	// Parse and index
@@ -125,7 +125,7 @@ func (e *Engine) Index(repoPath string, forceReindex bool) (*IndexResult, error)
 
 	err = e.hybrid.IndexElements(elements, e.embedder)
 	if err != nil {
-		log.Printf("[engine] embedding failed (BM25 only): %v", err)
+		logger.Debugf("[engine] embedding failed (BM25 only): %v", err)
 	}
 
 	// Cache results
@@ -141,7 +141,7 @@ func (e *Engine) Index(repoPath string, forceReindex bool) (*IndexResult, error)
 		}
 	}
 	if err := e.cache.Save(repo.Name, cachedData); err != nil {
-		log.Printf("[engine] cache save failed: %v", err)
+		logger.Debugf("[engine] cache save failed: %v", err)
 	}
 
 	return &IndexResult{
@@ -170,7 +170,7 @@ func (e *Engine) Query(question string) (*QueryResult, error) {
 
 	// Process query
 	pq := agent.ProcessQuery(question)
-	log.Printf("[engine] query type=%s complexity=%d keywords=%v", pq.QueryType, pq.Complexity, pq.Keywords)
+	logger.Debugf("[engine] query type=%s complexity=%d keywords=%v", pq.QueryType, pq.Complexity, pq.Keywords)
 
 	// If we have an API key, use the iterative agent
 	if e.client.APIKey != "" {

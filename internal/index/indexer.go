@@ -3,10 +3,10 @@ package index
 import (
 	"crypto/sha256"
 	"fmt"
-	"log"
 	"strings"
 
 	"github.com/duyhunghd6/fastcode-cli/internal/loader"
+	"github.com/duyhunghd6/fastcode-cli/internal/logger"
 	"github.com/duyhunghd6/fastcode-cli/internal/parser"
 	"github.com/duyhunghd6/fastcode-cli/internal/types"
 )
@@ -34,7 +34,7 @@ func (idx *Indexer) IndexRepository(repo *loader.Repository) ([]types.CodeElemen
 	for _, fi := range repo.Files {
 		content, err := loader.ReadFileContent(fi.Path)
 		if err != nil {
-			log.Printf("[indexer] skip %s: %v", fi.RelativePath, err)
+			logger.Debugf("[indexer] skip %s: %v", fi.RelativePath, err)
 			continue
 		}
 
@@ -51,7 +51,7 @@ func (idx *Indexer) IndexRepository(repo *loader.Repository) ([]types.CodeElemen
 		idx.indexFile(fi, content, parseResult)
 	}
 
-	log.Printf("[indexer] indexed %d elements from %s (%d files)",
+	logger.Debugf("[indexer] indexed %d elements from %s (%d files)",
 		len(idx.Elements), repo.Name, len(repo.Files))
 	return idx.Elements, nil
 }

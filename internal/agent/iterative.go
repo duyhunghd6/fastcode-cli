@@ -3,13 +3,13 @@ package agent
 import (
 	"encoding/json"
 	"fmt"
-	"log"
 	"path/filepath"
 	"sort"
 	"strings"
 
 	"github.com/duyhunghd6/fastcode-cli/internal/graph"
 	"github.com/duyhunghd6/fastcode-cli/internal/llm"
+	"github.com/duyhunghd6/fastcode-cli/internal/logger"
 	"github.com/duyhunghd6/fastcode-cli/internal/types"
 )
 
@@ -144,7 +144,7 @@ func (ia *IterativeAgent) Retrieve(query string, pq *ProcessedQuery) (*Retrieval
 	// ─── Round 1: Initial assessment (no code context yet) ───
 	round1Result, err := ia.executeRound1(query, pq)
 	if err != nil {
-		log.Printf("[agent] round 1 error: %v", err)
+		logger.Debugf("[agent] round 1 error: %v", err)
 		return &RetrievalResult{StopReason: "error"}, err
 	}
 
@@ -159,15 +159,15 @@ func (ia *IterativeAgent) Retrieve(query string, pq *ProcessedQuery) (*Retrieval
 	ia.initializeAdaptiveParams(queryComplexity)
 
 	// ─── Execute Round 1 ───
-	log.Printf("[agent] Executing Round 1 search")
+	logger.Debugf("[agent] Executing Round 1 search")
 
 	// Step 1: Standard retrieval (BM25)
 	var standardElements []types.CodeElement
 	if res, toolErr := ia.toolExecutor.searchCode(query); toolErr == nil && res != nil {
 		standardElements = append(standardElements, res.Elements...)
-		log.Printf("[agent] Standard retrieval found %d elements", len(standardElements))
+		logger.Debugf("[agent] Standard retrieval found %d elements", len(standardElements))
 	} else if toolErr != nil {
-		log.Printf("[agent] Standard retrieval error: %v", toolErr)
+		logger.Debugf("[agent] Standard retrieval error: %v", toolErr)
 	}
 
 	// Step 2: Tool calls execution (Regex / Filesystem)
@@ -189,7 +189,7 @@ func (ia *IterativeAgent) Retrieve(query string, pq *ProcessedQuery) (*Retrieval
 				useRegex, _ := params["use_regex"].(bool)
 
 				candidates := ia.toolExecutor.ExecuteSearchCodebase(searchTerm, filePattern, useRegex)
-				log.Printf("[agent] search_codebase(%q) returned %d files", searchTerm, len(candidates))
+				logger.Debugf("[agent] search_codebase(%q) returned %d files", searchTerm, len(candidates))
 
 				// Map directly to elements using the exact matched files
 				for _, c := range candidates {
@@ -202,7 +202,7 @@ func (ia *IterativeAgent) Retrieve(query string, pq *ProcessedQuery) (*Retrieval
 					dirPath = tc.GetArg()
 				}
 				candidates := ia.toolExecutor.ExecuteListDirectory(dirPath)
-				log.Printf("[agent] list_directory(%q) returned %d files", dirPath, len(candidates))
+				logger.Debugf("[agent] list_directory(%q) returned %d files", dirPath, len(candidates))
 
 				// Map directly to elements
 				for _, c := range candidates {
@@ -222,19 +222,19 @@ func (ia *IterativeAgent) Retrieve(query string, pq *ProcessedQuery) (*Retrieval
 	}
 
 	// Step 3: Merge and deduplicate
-	log.Printf("[agent] Merging %d standard and %d tool elements", len(standardElements), len(toolElements))
+	logger.Debugf("[agent] Merging %d standard and %d tool elements", len(standardElements), len(toolElements))
 	var mergedElements []types.CodeElement
 	mergedElements = append(mergedElements, standardElements...)
 	mergedElements = append(mergedElements, toolElements...)
 
-	log.Printf("[agent] Calling removeDuplicatesWithContainment")
+	logger.Debugf("[agent] Calling removeDuplicatesWithContainment")
 	mergedElements = ia.removeDuplicatesWithContainment(mergedElements)
-	log.Printf("[agent] After deduplication: %d elements remain", len(mergedElements))
+	logger.Debugf("[agent] After deduplication: %d elements remain", len(mergedElements))
 
 	// Step 4: Graph expansion (replaces LLM Semantic Bridge)
-	log.Printf("[agent] Calling expandWithGraph")
+	logger.Debugf("[agent] Calling expandWithGraph")
 	ia.gatheredElements = ia.expandWithGraph(mergedElements, 2)
-	log.Printf("[agent] expandWithGraph returned %d elements", len(ia.gatheredElements))
+	logger.Debugf("[agent] expandWithGraph returned %d elements", len(ia.gatheredElements))
 
 	// Record round 1 history
 	totalLines := ia.calculateTotalLines(ia.gatheredElements)
@@ -256,7 +256,7 @@ func (ia *IterativeAgent) Retrieve(query string, pq *ProcessedQuery) (*Retrieval
 
 		roundResult, err := ia.executeRoundN(query, pq, round)
 		if err != nil {
-			log.Printf("[agent] round %d error: %v", round, err)
+			logger.Debugf("[agent] round %d error: %v", round, err)
 			stopReason = "error"
 			break
 		}
@@ -273,9 +273,9 @@ func (ia *IterativeAgent) Retrieve(query string, pq *ProcessedQuery) (*Retrieval
 		lastConfidence = roundResult.Confidence
 
 		// Log element filtering
-		log.Printf("[agent] Round %d element filtering: %d -> %d elements",
+		logger.Debugf("[agent] Round %d element filtering: %d -> %d elements",
 			round, numBefore, len(ia.gatheredElements))
-		log.Printf("[agent] Round %d confidence: %d", round, lastConfidence)
+		logger.Debugf("[agent] Round %d confidence: %d", round, lastConfidence)
 
 		// Calculate metrics
 		totalLines = ia.calculateTotalLines(ia.gatheredElements)
@@ -304,7 +304,7 @@ func (ia *IterativeAgent) Retrieve(query string, pq *ProcessedQuery) (*Retrieval
 				toolName := tc.GetToolName()
 				result, err := ia.toolExecutor.Execute(toolName, tc.GetArg())
 				if err != nil {
-					log.Printf("[agent] tool %s error: %v", toolName, err)
+					logger.Debugf("[agent] tool %s error: %v", toolName, err)
 					continue
 				}
 				ia.gatheredElements = append(ia.gatheredElements, result.Elements...)
@@ -372,7 +372,7 @@ func (ia *IterativeAgent) initializeAdaptiveParams(queryComplexity int) {
 		ia.adaptiveLineBudget = maxLines
 	}
 
-	log.Printf("[agent] Adaptive params: max_iterations=%d, confidence_threshold=%d, line_budget=%d, query_complexity=%d",
+	logger.Debugf("[agent] Adaptive params: max_iterations=%d, confidence_threshold=%d, line_budget=%d, query_complexity=%d",
 		ia.maxIterations, ia.confidenceThreshold, ia.adaptiveLineBudget, queryComplexity)
 }
 
@@ -519,17 +519,17 @@ func (ia *IterativeAgent) parseRound1Response(response string) (*RoundResult, er
 func (ia *IterativeAgent) executeRoundN(query string, pq *ProcessedQuery, round int) (*RoundResult, error) {
 	prompt := ia.buildRoundNPrompt(query, pq, round)
 
-	log.Printf("[agent] Making ChatCompletion call for Round %d", round)
+	logger.Debugf("[agent] Making ChatCompletion call for Round %d", round)
 	response, err := ia.client.ChatCompletion([]llm.ChatMessage{
 		{Role: "system", Content: "You are a precise code analysis agent. Respond in specified format only."},
 		{Role: "user", Content: prompt},
 	}, ia.config.Temperature, ia.config.MaxTokensAgent)
 	if err != nil {
-		log.Printf("[agent] ChatCompletion error: %v", err)
+		logger.Debugf("[agent] ChatCompletion error: %v", err)
 		return nil, fmt.Errorf("LLM call round %d: %w", round, err)
 	}
 
-	log.Printf("[agent] Done ChatCompletion. Parsing response.")
+	logger.Debugf("[agent] Done ChatCompletion. Parsing response.")
 	return ia.parseRoundNResponse(response, round)
 }
 
@@ -863,7 +863,7 @@ func extractJSON(s string) string {
 
 // deduplicateElements was replaced by removeDuplicatesWithContainment to match Python's logic.
 func (ia *IterativeAgent) removeDuplicatesWithContainment(elements []types.CodeElement) []types.CodeElement {
-	log.Printf("[agent] removeDuplicatesWithContainment starting with %d elements", len(elements))
+	logger.Debugf("[agent] removeDuplicatesWithContainment starting with %d elements", len(elements))
 	// First remove exact ID duplicates
 	seen := make(map[string]bool)
 	var unique []types.CodeElement
@@ -968,7 +968,7 @@ func getTypePriority(t string) int {
 // ─── Graph Expansion (matching Python's CodeGraphs inclusion) ───
 
 func (ia *IterativeAgent) expandWithGraph(elements []types.CodeElement, maxHops int) []types.CodeElement {
-	log.Printf("[agent] expandWithGraph starting with %d elements", len(elements))
+	logger.Debugf("[agent] expandWithGraph starting with %d elements", len(elements))
 	if ia.graphs == nil || len(elements) == 0 {
 		return elements
 	}
@@ -983,11 +983,11 @@ func (ia *IterativeAgent) expandWithGraph(elements []types.CodeElement, maxHops 
 		limit = len(elements)
 	}
 
-	log.Printf("[agent] expandWithGraph loop. limit=%d", limit)
+	logger.Debugf("[agent] expandWithGraph loop. limit=%d", limit)
 	for i := 0; i < limit; i++ {
 		elem := elements[i]
 		relatedIDs := ia.graphs.GetRelatedElements(elem.ID, maxHops)
-		log.Printf("[agent] element %d (ID %s) has %d related elements", i, elem.ID, len(relatedIDs))
+		logger.Debugf("[agent] element %d (ID %s) has %d related elements", i, elem.ID, len(relatedIDs))
 		for _, relatedID := range relatedIDs {
 			if _, exists := expanded[relatedID]; !exists {
 				if relatedElem, ok := ia.toolExecutor.GetElement(relatedID); ok {
@@ -1002,7 +1002,7 @@ func (ia *IterativeAgent) expandWithGraph(elements []types.CodeElement, maxHops 
 		result = append(result, elem)
 	}
 
-	log.Printf("[agent] expandWithGraph returning %d expanded elements", len(result))
+	logger.Debugf("[agent] expandWithGraph returning %d expanded elements", len(result))
 	return result
 }
 

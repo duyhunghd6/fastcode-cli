@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/duyhunghd6/fastcode-cli/internal/config"
+	"github.com/duyhunghd6/fastcode-cli/internal/logger"
 	"github.com/duyhunghd6/fastcode-cli/internal/orchestrator"
 	"github.com/joho/godotenv"
 	"github.com/spf13/cobra"
@@ -49,10 +50,18 @@ and LLM-powered iterative retrieval to answer questions about codebases.`,
 	var cacheDir string
 	var embeddingModel string
 	var noEmbeddings bool
+	var debug bool
 
+	rootCmd.Flags().BoolP("version", "V", false, "Print version information and quit")
 	rootCmd.PersistentFlags().StringVar(&cacheDir, "cache-dir", "", "Cache directory (default: ~/.fastcode/cache)")
 	rootCmd.PersistentFlags().StringVar(&embeddingModel, "embedding-model", "", "Embedding model name (default: from config)")
-	rootCmd.PersistentFlags().BoolVar(&noEmbeddings, "no-embeddings", false, "Skip embedding generation (BM25 only)")
+	rootCmd.PersistentFlags().BoolVar(&noEmbeddings, "no-embeddings", true, "Skip embedding generation (BM25 only, defaults to true)")
+	rootCmd.PersistentFlags().BoolVar(&debug, "debug", false, "Enable debug logging")
+
+	// Set debug mode globally when root command runs
+	rootCmd.PersistentPreRun = func(cmd *cobra.Command, args []string) {
+		logger.DebugEnabled = debug
+	}
 
 	buildConfig := func() orchestrator.Config {
 		cfg := orchestrator.DefaultConfig()
@@ -80,7 +89,9 @@ and LLM-powered iterative retrieval to answer questions about codebases.`,
 			cfg := buildConfig()
 			engine := orchestrator.NewEngine(cfg)
 
-			fmt.Printf("⚡ Indexing %s...\n", repoPath)
+			if debug {
+				fmt.Printf("⚡ Indexing %s...\n", repoPath)
+			}
 			start := time.Now()
 
 			result, err := engine.Index(repoPath, forceReindex)
@@ -134,14 +145,18 @@ and LLM-powered iterative retrieval to answer questions about codebases.`,
 
 			// Index first if repo is specified
 			if repoPath != "" {
-				fmt.Printf("⚡ Loading index for %s...\n", repoPath)
+				if debug {
+					fmt.Printf("⚡ Loading index for %s...\n", repoPath)
+				}
 				_, err := engine.Index(repoPath, false)
 				if err != nil {
 					return fmt.Errorf("index load failed: %w", err)
 				}
 			}
 
-			fmt.Printf("🔍 Querying: %s\n\n", question)
+			if debug {
+				fmt.Printf("🔍 Querying: %s\n\n", question)
+			}
 			start := time.Now()
 
 			result, err := engine.Query(question)

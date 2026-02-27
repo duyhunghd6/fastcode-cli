@@ -1,14 +1,19 @@
 BINARY_NAME := fastcode
 
+VERSION ?= 0.1.0-dev
+BUILD_TIME := $(shell date -u '+%Y-%m-%dT%H:%M:%SZ')
+GIT_COMMIT := $(shell git rev-parse --short HEAD 2>/dev/null || echo "unknown")
+LDFLAGS := -X main.version=$(VERSION) -X main.buildTime=$(BUILD_TIME) -X main.gitCommit=$(GIT_COMMIT)
+
 .PHONY: build install uninstall test test-e2e clean help
 
 ## Build the binary in the project directory
 build:
-	go build -o $(BINARY_NAME) cmd/fastcode/*.go
+	go build -ldflags="$(LDFLAGS)" -o $(BINARY_NAME) cmd/fastcode/*.go
 
 ## Install globally via go install (binary goes to GOPATH/bin)
 install:
-	go install ./cmd/fastcode/
+	go install -ldflags="$(LDFLAGS)" ./cmd/fastcode/
 	@echo "✅ Installed $(BINARY_NAME) to $$(go env GOPATH)/bin/$(BINARY_NAME)"
 	@echo ""
 	@echo "👉 Make sure GOPATH/bin is in your PATH:"

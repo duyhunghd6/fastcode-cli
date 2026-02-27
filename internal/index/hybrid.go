@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/duyhunghd6/fastcode-cli/internal/llm"
+	"github.com/duyhunghd6/fastcode-cli/internal/logger"
 	"github.com/duyhunghd6/fastcode-cli/internal/types"
 )
 
@@ -212,7 +213,7 @@ func (hr *HybridRetriever) Search(query string, queryVec []float32, topK int) []
 			Score:   sorted_[i].score,
 			Source:  source,
 		}
-		fmt.Printf("DEBUG HYBRID TOP %d: ID=%s Type=%s Score=%f\n", i, elem.ID, elem.Type, sorted_[i].score)
+		logger.Debugf("[hybrid] DEBUG HYBRID TOP %d: ID=%s Type=%s Score=%f\n", i, elem.ID, elem.Type, sorted_[i].score)
 	}
 	return results
 }
