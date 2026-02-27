@@ -202,9 +202,19 @@ func (ia *IterativeAgent) Retrieve(query string, pq *ProcessedQuery) (*Retrieval
 		}
 		log.Printf("[agent] %d unique file candidates for LLM selection", len(uniqueCandidates))
 
-		// LLM file selection (matching Python's _llm_select_elements_with_granularity)
-		selectedFiles := ia.llmSelectFiles(query, uniqueCandidates)
-		log.Printf("[agent] LLM selected %d files", len(selectedFiles))
+		// Step 2: Use LLM to select the most relevant initial files
+		selectedFiles := ia.llmSelectFiles(pq.Original, uniqueCandidates)
+		if len(selectedFiles) == 0 {
+			log.Printf("[agent] LLM file selection returned 0 files, falling back to top 10 candidates")
+			for i, c := range uniqueCandidates {
+				if i >= 10 {
+					break
+				}
+				selectedFiles = append(selectedFiles, c.FilePath)
+			}
+		} else {
+			log.Printf("[agent] LLM selected %d files for initial context", len(selectedFiles))
+		}
 
 		// Convert selected files to indexed elements
 		for _, filePath := range selectedFiles {

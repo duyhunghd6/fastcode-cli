@@ -52,7 +52,7 @@ echo "🟡 [Python] Indexing with FASTCODE_NO_EMBEDDINGS=1..."
 export FASTCODE_NO_EMBEDDINGS=1
 unset FASTCODE_DEBUG_PROMPT_DIR 2>/dev/null || true
 unset FASTCODE_DEBUG_PROMPT_FILE 2>/dev/null || true
-(cd "$PY_CLI" && source .venv/bin/activate && python main.py index --repo-path "$REPO" --reindex >/dev/null 2>&1 || true)
+(cd "$PY_CLI" && source .venv/bin/activate && python main.py index --repo-path "$REPO" --reindex </dev/null >/dev/null 2>&1 || true)
 echo "   Python Index completed"
 echo ""
 
@@ -61,7 +61,7 @@ echo "🟡 [Python] Running full-flow query (logging ALL LLM calls)..."
 export FASTCODE_NO_EMBEDDINGS=1
 export FASTCODE_DEBUG_PROMPT_DIR="$PY_DIR"
 unset FASTCODE_DEBUG_PROMPT_FILE 2>/dev/null || true
-(cd "$PY_CLI" && source .venv/bin/activate && python main.py query --repo-path "$REPO" --query "$QUERY" 2>&1 || true)
+(cd "$PY_CLI" && source .venv/bin/activate && python main.py query --repo-path "$REPO" --query "$QUERY" </dev/null 2>&1 || true)
 unset FASTCODE_DEBUG_PROMPT_DIR
 
 PY_REQ_COUNT=$(ls "$PY_DIR"/call_*_request.json 2>/dev/null | wc -l | tr -d ' ')

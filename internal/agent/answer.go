@@ -22,10 +22,12 @@ func NewAnswerGenerator(client *llm.Client) *AnswerGenerator {
 func (ag *AnswerGenerator) GenerateAnswer(query string, pq *ProcessedQuery, elements []types.CodeElement) (string, error) {
 	prompt := ag.buildPrompt(query, pq, elements)
 
+	// Embedded system prompt in the user message, matching Python
+	fullPrompt := answerSystemPrompt() + "\n\n" + prompt
+
 	answer, err := ag.client.ChatCompletion([]llm.ChatMessage{
-		{Role: "system", Content: answerSystemPrompt()},
-		{Role: "user", Content: prompt},
-	}, 0.2, 8000)
+		{Role: "user", Content: fullPrompt},
+	}, 0.4, 20000)
 	if err != nil {
 		return "", fmt.Errorf("generate answer: %w", err)
 	}
