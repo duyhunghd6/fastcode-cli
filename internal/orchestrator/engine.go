@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/duyhunghd6/fastcode-cli/internal/agent"
 	"github.com/duyhunghd6/fastcode-cli/internal/cache"
@@ -160,6 +161,132 @@ type QueryResult struct {
 	Rounds     int    `json:"rounds"`
 	StopReason string `json:"stop_reason"`
 	Elements   int    `json:"elements_used"`
+}
+
+// AnalyzeResult holds the result of a direct hybrid search (no LLM).
+type AnalyzeResult struct {
+	Query    string      `json:"query"`
+	RepoName string      `json:"repo_name"`
+	Total    int         `json:"total_results"`
+	Results  []SearchHit `json:"results"`
+}
+
+// SearchHit represents a single search result with relevance score.
+type SearchHit struct {
+	Name      string  `json:"name"`
+	Type      string  `json:"type"`
+	FilePath  string  `json:"file_path"`
+	StartLine int     `json:"start_line"`
+	EndLine   int     `json:"end_line"`
+	Score     float64 `json:"relevance_score"`
+	Signature string  `json:"signature,omitempty"`
+	Docstring string  `json:"docstring,omitempty"`
+	Code      string  `json:"code,omitempty"`
+}
+
+// Analyze performs a direct hybrid search without LLM, returning scored results.
+// This is the script-callable entry point for agent coding tools.
+func (e *Engine) Analyze(question string, topK int, includeCode bool) (*AnalyzeResult, error) {
+	if e.hybrid == nil || len(e.elements) == 0 {
+		return nil, fmt.Errorf("no repository indexed — run 'fastcode index <path>' first")
+	}
+
+	// Optionally embed the query for semantic search
+	var queryVec []float32
+	if e.embedder != nil {
+		vec, err := e.embedder.EmbedText(question)
+		if err == nil {
+			queryVec = vec
+		}
+	}
+
+	results := e.hybrid.Search(question, queryVec, topK)
+
+	hits := make([]SearchHit, 0, len(results))
+	for _, r := range results {
+		if r.Element == nil {
+			continue
+		}
+		hit := SearchHit{
+			Name:      r.Element.Name,
+			Type:      r.Element.Type,
+			FilePath:  r.Element.RelativePath,
+			StartLine: r.Element.StartLine,
+			EndLine:   r.Element.EndLine,
+			Score:     r.Score,
+			Signature: r.Element.Signature,
+			Docstring: r.Element.Docstring,
+		}
+		if includeCode {
+			hit.Code = r.Element.Code
+		}
+		hits = append(hits, hit)
+	}
+
+	return &AnalyzeResult{
+		Query:    question,
+		RepoName: e.repoName,
+		Total:    len(hits),
+		Results:  hits,
+	}, nil
+}
+
+// ToTOON converts AnalyzeResult to TOON (Token-Oriented Object Notation) format.
+// TOON uses tabular headers for homogeneous arrays, saving ~40% tokens vs JSON.
+func (ar *AnalyzeResult) ToTOON(includeCode bool) string {
+	var sb strings.Builder
+
+	sb.WriteString(fmt.Sprintf("query: %s\n", ar.Query))
+	sb.WriteString(fmt.Sprintf("repo_name: %s\n", ar.RepoName))
+	sb.WriteString(fmt.Sprintf("total_results: %d\n", ar.Total))
+
+	if len(ar.Results) == 0 {
+		sb.WriteString("results:\n  (empty)\n")
+		return sb.String()
+	}
+
+	// Tabular TOON: declare fields once, then rows
+	if includeCode {
+		sb.WriteString("results[" + fmt.Sprintf("%d", len(ar.Results)) + "]{name,type,file_path,start_line,end_line,relevance_score,signature,docstring,code}:\n")
+	} else {
+		sb.WriteString("results[" + fmt.Sprintf("%d", len(ar.Results)) + "]{name,type,file_path,start_line,end_line,relevance_score,signature,docstring}:\n")
+	}
+
+	for _, hit := range ar.Results {
+		sig := hit.Signature
+		if sig == "" {
+			sig = "-"
+		}
+		doc := hit.Docstring
+		if doc == "" {
+			doc = "-"
+		}
+		// Escape commas in values
+		sig = strings.ReplaceAll(sig, ",", "\\,")
+		doc = strings.ReplaceAll(doc, ",", "\\,")
+
+		if includeCode {
+			code := hit.Code
+			if code == "" {
+				code = "-"
+			} else {
+				// Encode newlines for single-line TOON row
+				code = strings.ReplaceAll(code, "\n", "\\n")
+				code = strings.ReplaceAll(code, ",", "\\,")
+				// Truncate very long code to keep TOON usable
+				if len(code) > 2000 {
+					code = code[:2000] + "...(truncated)"
+				}
+			}
+			sb.WriteString(fmt.Sprintf("  %s,%s,%s,%d,%d,%.4f,%s,%s,%s\n",
+				hit.Name, hit.Type, hit.FilePath, hit.StartLine, hit.EndLine, hit.Score, sig, doc, code))
+		} else {
+			sb.WriteString(fmt.Sprintf("  %s,%s,%s,%d,%d,%.4f,%s,%s\n",
+				hit.Name, hit.Type, hit.FilePath, hit.StartLine, hit.EndLine, hit.Score, sig, doc))
+		}
+	}
+
+	return sb.String()
 }
 
 // Query performs a full query pipeline: search → agent → answer.

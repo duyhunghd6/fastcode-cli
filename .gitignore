@@ -42,5 +42,4 @@ logs/
 __pycache__/
 *.pyc
 /fastcode
-.agents
 reference/

@@ -127,6 +127,7 @@ func (bm *BM25) Search(query string, topK int) []BM25Result {
 	var results []scored
 	for i, doc := range bm.docs {
 		var score float64
+		matched := false
 
 		for _, token := range queryTokens {
 			termFreq := doc.TF[token]
@@ -134,6 +135,7 @@ func (bm *BM25) Search(query string, topK int) []BM25Result {
 				continue
 			}
 
+			matched = true
 			idf := bm.idf[token]
 			// Python's TF normalization implementation
 			tfNorm := (termFreq * (bm.k1 + 1)) / (termFreq + bm.k1*(1-bm.b+bm.b*float64(doc.Length)/bm.avgDL))
@@ -141,7 +143,7 @@ func (bm *BM25) Search(query string, topK int) []BM25Result {
 			score += idf * tfNorm
 		}
 
-		if score > 0 {
+		if matched {
 			results = append(results, scored{idx: i, score: score})
 		}
 	}
@@ -175,6 +177,15 @@ func (bm *BM25) DocCount() int {
 	return bm.totalDocs
 }
 
+var stopWords = map[string]bool{
+	"a": true, "an": true, "and": true, "are": true, "as": true, "at": true, "be": true, "by": true,
+	"can": true, "did": true, "do": true, "does": true, "for": true, "from": true, "how": true,
+	"i": true, "if": true, "in": true, "is": true, "it": true, "of": true, "on": true, "or": true,
+	"that": true, "the": true, "this": true, "to": true, "was": true, "what": true, "when": true,
+	"where": true, "which": true, "who": true, "why": true, "will": true, "with": true,
+	"have": true, "has": true, "had": true, "repo": true, "repository": true, "codebase": true,
+}
+
 // tokenize splits text into lowercase tokens, handling camelCase and snake_case.
 func tokenize(text string) []string {
 	text = strings.ToLower(text)
@@ -201,7 +212,7 @@ func tokenize(text string) []string {
 		raw = append(raw, current.String())
 	}
 
-	// Filter short tokens
+	// Filter short tokens and stopwords
 	var tokens []string
 	for _, tok := range raw {
 		if len(tok) > 1 {

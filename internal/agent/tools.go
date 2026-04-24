@@ -113,12 +113,28 @@ func (te *ToolExecutor) ExecuteSearchCodebase(searchTerm, filePattern string, us
 	var contentPattern *regexp.Regexp
 	flags := "(?i)" // case-insensitive by default
 	if useRegex {
-		compiled, err := regexp.Compile(flags + searchTerm)
-		if err != nil {
-			logger.Debugf("[tools] invalid regex: %v", err)
-			return nil
+		// Strip existing inline flags (e.g. (?i), (?m), (?s)) from LLM-generated patterns
+		// to avoid duplication — we always add (?i) ourselves.
+		// Also strip JS-style /pattern/flags wrapper if present.
+		cleanedTerm := searchTerm
+		cleanedTerm = regexp.MustCompile(`^\(\?[imsx]+\)`).ReplaceAllString(cleanedTerm, "")
+		cleanedTerm = strings.TrimPrefix(cleanedTerm, "/")
+		cleanedTerm = strings.TrimSuffix(cleanedTerm, "/")
+		cleanedTerm = strings.TrimSuffix(cleanedTerm, "/i")
+		cleanedTerm = strings.TrimSuffix(cleanedTerm, "/gi")
+		if cleanedTerm == "" {
+			cleanedTerm = searchTerm // fallback to original if stripping consumed everything
 		}
-		contentPattern = compiled
+
+		compiled, err := regexp.Compile(flags + cleanedTerm)
+		if err != nil {
+			logger.Debugf("[tools] invalid regex %q, falling back to literal search: %v", searchTerm, err)
+			// Fallback: treat as literal search instead of returning nil
+			escaped := regexp.QuoteMeta(searchTerm)
+			contentPattern = regexp.MustCompile(flags + escaped)
+		} else {
+			contentPattern = compiled
+		}
 	} else {
 		// Literal search — escape special characters
 		escaped := regexp.QuoteMeta(searchTerm)

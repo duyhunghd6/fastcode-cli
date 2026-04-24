@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/duyhunghd6/fastcode-cli/internal/config"
@@ -182,6 +183,91 @@ and LLM-powered iterative retrieval to answer questions about codebases.`,
 	queryCmd.Flags().String("repo", "", "Repository path to index/load")
 	queryCmd.Flags().BoolVar(&jsonOutput, "json", false, "Output as JSON")
 	rootCmd.AddCommand(queryCmd)
+
+	// --- analyze command ---
+	var topK int
+	var includeCode bool
+	var outputFormat string
+	var reIndex bool
+
+	analyzeCmd := &cobra.Command{
+		Use:   "analyze",
+		Short: "Analyze codebase with hybrid search (no LLM needed)",
+		Long: `Perform direct hybrid search (BM25 + optional vector) against an indexed
+repository. Returns scored results as structured JSON for script consumption.
+No LLM API key required.`,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			repoPath, _ := cmd.Flags().GetString("repo")
+			queryStr, _ := cmd.Flags().GetString("query")
+
+			if repoPath == "" {
+				return fmt.Errorf("--repo is required")
+			}
+			if queryStr == "" {
+				return fmt.Errorf("--query is required")
+			}
+
+			cfg := buildConfig()
+			engine := orchestrator.NewEngine(cfg)
+
+			// Index: force re-index only when --re-index is passed
+			if reIndex {
+				fmt.Fprintln(os.Stderr, "Firstcall analyze -> force reindex the code")
+			}
+			_, err := engine.Index(repoPath, reIndex)
+			if err != nil {
+				return fmt.Errorf("index failed: %w", err)
+			}
+
+			start := time.Now()
+			result, err := engine.Analyze(queryStr, topK, includeCode)
+			if err != nil {
+				return fmt.Errorf("analyze failed: %w", err)
+			}
+			elapsed := time.Since(start)
+
+			if outputFormat == "json" {
+				enc := json.NewEncoder(os.Stdout)
+				enc.SetIndent("", "  ")
+				return enc.Encode(result)
+			}
+
+			if outputFormat == "toon" {
+				fmt.Print(result.ToTOON(includeCode))
+				return nil
+			}
+
+			// Text format
+			fmt.Printf("🔍 Query: %s\n", result.Query)
+			fmt.Printf("📦 Repo: %s | Results: %d | ⏱ %s\n\n", result.RepoName, result.Total, elapsed.Round(time.Millisecond))
+			for i, hit := range result.Results {
+				fmt.Printf("%d. [%.2f] %s (%s) — %s:L%d-%d\n",
+					i+1, hit.Score, hit.Name, hit.Type, hit.FilePath, hit.StartLine, hit.EndLine)
+				if hit.Signature != "" {
+					fmt.Printf("   %s\n", hit.Signature)
+				}
+				if includeCode && hit.Code != "" {
+					lines := strings.Split(hit.Code, "\n")
+					preview := hit.Code
+					if len(lines) > 10 {
+						preview = strings.Join(lines[:10], "\n") + "\n   ... (truncated)"
+					}
+					fmt.Printf("   ```\n   %s\n   ```\n", preview)
+				}
+				fmt.Println()
+			}
+			return nil
+		},
+	}
+	analyzeCmd.Flags().String("repo", "", "Repository path (required)")
+	analyzeCmd.Flags().String("query", "", "Search query (required)")
+	analyzeCmd.Flags().IntVar(&topK, "top-k", 10, "Number of results to return")
+	analyzeCmd.Flags().StringVar(&outputFormat, "format", "toon", "Output format: json, toon, or text")
+	analyzeCmd.Flags().BoolVar(&includeCode, "include-code", true, "Include source code in results")
+	analyzeCmd.Flags().BoolVar(&reIndex, "reindex", false, "Force re-index before searching (use on first call)")
+	analyzeCmd.Flags().BoolVar(&reIndex, "re-index", false, "Force re-index before searching (alias)")
+	_ = analyzeCmd.Flags().MarkHidden("re-index")
+	rootCmd.AddCommand(analyzeCmd)
 
 	// --- serve-mcp command ---
 	serveMCPCmd := &cobra.Command{
